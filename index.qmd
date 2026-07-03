@@ -1,0 +1,11 @@
+---
+title: "Single-cell analysis tutorials"
+---
+
+This site contains hands-on single-cell analysis tutorials in R using SEA-AD
+data.
+
+## Tutorials
+
+- [Tutorial 00: Setup](tutorials/00-setup/index.qmd)
+- [Tutorial 01: Read an H5AD file](tutorials/01-read-h5ad/index.qmd)

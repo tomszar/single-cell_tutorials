@@ -47,3 +47,19 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+# Quarto output and caches
+_site/
+/.quarto/
+/_freeze/
+
+# Downloaded data and generated analysis outputs
+*.h5ad
+data/*
+!data/README.md
+!data/example/
+!data/example/.gitkeep
+outputs/*
+!outputs/.gitkeep
+
+**/*.quarto_ipynb

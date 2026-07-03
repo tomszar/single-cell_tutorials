@@ -1,0 +1,185 @@
+---
+title: "Opening SEA-AD single-cell files in R"
+subtitle: "Quick-start with a single donor"
+author:
+  - name: "IPRE Winter 2026 · MOTCO · research line IPI-26-1206"
+format:
+  html:
+    toc: true
+    code-copy: true
+execute:
+  eval: false
+---
+
+This tutorial walks through loading one SEA-AD donor's single-nucleus RNA-seq
+file into R and looking at what is inside. Using one donor instead of the whole
+cohort keeps the download and memory requirements small, so you can get a
+working object in a few minutes before you split off into your own track.
+Everything after the download stays in R.
+
+SEA-AD ships its data as `.h5ad`, a format from the Python world. We read it
+straight into R with [`schard`](https://github.com/cellgeni/schard), which is
+pure R—no Python environment is required—and returns a
+`SingleCellExperiment`, the standard Bioconductor object used by both
+downstream pipelines.
+
+## Before you start
+
+You need R 4.2 or newer and a web browser. One donor file is small enough for
+any laptop.
+
+## Step 1 — Install the R packages
+
+Run this once. The first two packages come from Bioconductor; `schard` comes
+from GitHub.
+
+```{r}
+# Bioconductor packages
+if (!requireNamespace("BiocManager", quietly = TRUE)) {
+  install.packages("BiocManager")
+}
+BiocManager::install(c("rhdf5", "SingleCellExperiment"))
+
+# schard: reads .h5ad in pure R, no Python needed
+if (!requireNamespace("remotes", quietly = TRUE)) {
+  install.packages("remotes")
+}
+remotes::install_github("cellgeni/schard")
+```
+
+If `schard` reports an installation error, install `rhdf5` on its own first—it
+is the component that reads the HDF5 file—and then try installing `schard`
+again.
+
+## Step 2 — Download one donor's file in a web browser
+
+The single-cell data is available from the public SEA-AD download site. No
+account or command-line tool is required. The per-donor RNA-seq files are in
+`PFC/RNAseq/`. PFC is the prefrontal cortex, Brodmann area 9, also called
+DLPFC. There is one file per donor, plus a large all-cohort file that you
+should skip for now.
+
+1. Open the [SEA-AD public data browser](https://sea-ad-single-cell-profiling.s3.amazonaws.com/index.html).
+2. Open the `PFC` folder and then the `RNAseq` folder.
+3. Find the filename containing `H20.33.001`.
+4. Download that `.h5ad` file.
+5. Move the downloaded file into this tutorial's folder and rename it
+   `donor_H20.33.001.h5ad`.
+
+Any donor works; `H20.33.001` is just a concrete choice. If you use a different
+donor, change the filename in the R code below. The other brain region, MTG
+(middle temporal gyrus), is under `MTG/RNAseq/`.
+
+## Step 3 — Load it into R
+
+Open this tutorial's folder as an RStudio project or set it as your working
+directory. In RStudio, select **Session > Set Working Directory > To Source
+File Location**. Then run the following code.
+
+```{r}
+library(schard)
+library(SingleCellExperiment)
+
+sce <- schard::h5ad2sce("donor_H20.33.001.h5ad")
+sce
+```
+
+This prints a summary of the object. A `SingleCellExperiment` holds three
+things you will reach for constantly:
+
+- the expression matrix: `counts(sce)` or `assay(sce)`;
+- the per-cell metadata: `colData(sce)`; and
+- the per-gene metadata: `rowData(sce)`.
+
+## Step 4 — Look at what you loaded
+
+Get your bearings before doing anything else. This is also the raw material
+for the variable dictionary you were asked to start.
+
+```{r}
+dim(sce)                 # genes (rows) x cells (columns)
+assayNames(sce)          # which matrices are stored
+head(rownames(sce))      # gene identifiers
+colnames(colData(sce))   # every per-cell metadata column
+```
+
+Now find the columns that matter for the Alzheimer's work: the cell-type
+label, the donor's sex, and the pathology measure.
+
+```{r}
+cd <- colData(sce)
+
+# Cell-type labels in the SEA-AD taxonomy
+table(cd$Subclass)     # broad types (e.g. Microglia-PVM, Astrocyte)
+table(cd$Supertype)    # fine-grained types
+
+# Sex and the categorical AD pathology score
+table(cd$Sex)
+table(cd$`Overall AD Neuropathological Change`)
+
+# Continuous pathology axis: confirm its exact name, then inspect it
+grep(
+  "pseudo|neuropath",
+  colnames(cd),
+  value = TRUE,
+  ignore.case = TRUE
+)
+```
+
+Two things to notice:
+
+1. Column names with spaces need backticks, as with
+   `Overall AD Neuropathological Change`.
+2. Because this is a single donor, `Sex` and the pathology score are the same
+   for every cell. The differences you care about appear only when you compare
+   donors, which is the next step in both tracks.
+
+## Step 5 — Subset to one cell type
+
+To see how subsetting works, keep just one cell type. Match the label exactly
+to what `table(cd$Subclass)` printed.
+
+```{r}
+micro <- sce[, sce$Subclass == "Microglia-PVM"]
+dim(micro)
+```
+
+## If something breaks
+
+::: {.callout-warning title="The file cannot be found"}
+Confirm that `donor_H20.33.001.h5ad` is in the same folder as this `.qmd` file
+and that R's working directory is set to that folder. Check with:
+
+```{r}
+getwd()
+file.exists("donor_H20.33.001.h5ad")
+```
+:::
+
+::: {.callout-warning title="Integer-overflow warning, or `'p' must be a nondecreasing vector`"}
+This can happen with very large `.h5ad` files, such as the full
+1.2-million-cell cohort file, which is about 35 GB. Using one donor avoids the
+problem; this is a known limitation of reading very large files this way.
+:::
+
+::: {.callout-warning title="Out of memory"}
+Do not load the all-cohort file on a laptop. A one-donor file is appropriate
+for this tutorial.
+:::
+
+::: {.callout-warning title="A `table()` result is empty or a column is oddly named"}
+Run `colnames(colData(sce))` again and copy the column name exactly, including
+spaces and capitalization.
+:::
+
+## Where this goes next
+
+You now have a `SingleCellExperiment` for one donor and know where sex,
+pathology, and cell type live in it. From here, the project tracks diverge:
+
+- **Pseudobulk analysis:** repeat this loading process over donors, then
+  perform per-donor pseudobulk aggregation.
+- **Trajectory analysis:** run PCA and UMAP on your chosen cell type, then
+  anchor the `slingshot` trajectory in low-pathology cells.
+
+Bring your variable dictionary to the next check-in.
