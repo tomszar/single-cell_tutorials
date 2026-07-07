@@ -55,12 +55,12 @@ again.
 
 The single-cell data is available from the public SEA-AD download site. No
 account or command-line tool is required. The per-donor RNA-seq files are in
-`PFC/RNAseq/`. PFC is the prefrontal cortex, Brodmann area 9, also called
-DLPFC. There is one file per donor, plus a large all-cohort file that you
-should skip for now.
+`PFC/RNAseq/donor_objects/`. PFC is the prefrontal cortex, Brodmann area 9,
+also called DLPFC. There is one file per donor in that folder, plus a large
+all-cohort file elsewhere in `RNAseq/` that you should skip for now.
 
 1. Open the [SEA-AD public data browser](https://sea-ad-single-cell-profiling.s3.amazonaws.com/index.html).
-2. Open the `PFC` folder and then the `RNAseq` folder.
+2. Open the `PFC` folder, then `RNAseq`, then `donor_objects`.
 3. Find the filename containing `H20.33.001`.
 4. Download that `.h5ad` file.
 5. Move the downloaded file into this tutorial's folder and rename it
@@ -68,7 +68,7 @@ should skip for now.
 
 Any donor works; `H20.33.001` is just a concrete choice. If you use a different
 donor, change the filename in the R code below. The other brain region, MTG
-(middle temporal gyrus), is under `MTG/RNAseq/`.
+(middle temporal gyrus), has the same layout under `MTG/RNAseq/donor_objects/`.
 
 ## Step 3 — Load it into R
 
