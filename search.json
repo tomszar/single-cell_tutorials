@@ -1,82 +1,5 @@
 [
   {
-    "objectID": "tutorials/00-setup/index.html",
-    "href": "tutorials/00-setup/index.html",
-    "title": "Tutorial 00: Setup",
-    "section": "",
-    "text": "This tutorial gets your computer ready for the rest of the series. There is no biology or single-cell data here — just installing the tools and confirming, interactively, that they work together. By the end you will have R, RStudio, Quarto, and Git installed, this repository cloned to your computer, a handful of commonly used R packages available, and you will have run a code chunk inside RStudio and seen its output.\nDo this once, before Tutorial 01."
-  },
-  {
-    "objectID": "tutorials/00-setup/index.html#what-youll-have-when-youre-done",
-    "href": "tutorials/00-setup/index.html#what-youll-have-when-youre-done",
-    "title": "Tutorial 00: Setup",
-    "section": "What you’ll have when you’re done",
-    "text": "What you’ll have when you’re done\n\nR and RStudio installed and opening correctly.\nQuarto installed (or confirmed already bundled with your RStudio).\nGit installed, and this repository cloned to your computer as an RStudio project.\nA small set of R packages used across these tutorials.\nA .qmd notebook you have opened in RStudio, run interactively chunk by chunk, and seen produce output (a table and a plot)."
-  },
-  {
-    "objectID": "tutorials/00-setup/index.html#before-you-start",
-    "href": "tutorials/00-setup/index.html#before-you-start",
-    "title": "Tutorial 00: Setup",
-    "section": "Before you start",
-    "text": "Before you start\nYou need administrator rights on your computer (to install software), an internet connection, and about 15–20 minutes. Instructions are given for Windows and macOS separately — follow the column for your operating system."
-  },
-  {
-    "objectID": "tutorials/00-setup/index.html#step-1-install-r",
-    "href": "tutorials/00-setup/index.html#step-1-install-r",
-    "title": "Tutorial 00: Setup",
-    "section": "Step 1 — Install R",
-    "text": "Step 1 — Install R\nR is the language; you’ll install RStudio next as the editor you actually work in.\n\nWindowsmacOS\n\n\n\nGo to the CRAN download page for Windows.\nClick the top link (e.g. “Download R-4.x.x for Windows”).\nRun the downloaded .exe installer, accepting the default options.\nAlso install Rtools, matching your R version. Rtools provides the compiler some R packages need to install from source. It is a separate installer from R itself.\n\n\n\n\nGo to the CRAN download page for macOS.\nDownload the .pkg file matching your Mac: the arm64 build for Apple Silicon (M1/M2/M3/M4), the x86_64 build for an older Intel Mac. If you’re not sure which chip you have, check via the Apple menu &gt; About This Mac.\nRun the downloaded .pkg installer, accepting the default options.\nInstall the Xcode command line tools, which some R packages need to compile from source. Open Terminal and run:\nxcode-select --install\nIf a dialog says they’re already installed, you’re set."
-  },
-  {
-    "objectID": "tutorials/00-setup/index.html#step-2-install-rstudio",
-    "href": "tutorials/00-setup/index.html#step-2-install-rstudio",
-    "title": "Tutorial 00: Setup",
-    "section": "Step 2 — Install RStudio",
-    "text": "Step 2 — Install RStudio\nRStudio is the desktop application you’ll use to write and run code, view plots, and manage files.\n\nWindowsmacOS\n\n\n\nGo to the RStudio Desktop download page.\nDownload the Windows installer and run it, accepting the default options.\n\n\n\n\nGo to the RStudio Desktop download page.\nDownload the macOS installer (.dmg), open it, and drag RStudio into Applications.\n\n\n\n\nOpen RStudio once it’s installed. It should start without errors and show panes for the console, environment, files, and plots. If RStudio reports it cannot find an R installation, revisit Step 1."
-  },
-  {
-    "objectID": "tutorials/00-setup/index.html#step-3-install-quarto",
-    "href": "tutorials/00-setup/index.html#step-3-install-quarto",
-    "title": "Tutorial 00: Setup",
-    "section": "Step 3 — Install Quarto",
-    "text": "Step 3 — Install Quarto\nThese tutorials are written in Quarto (.qmd) files. Recent versions of RStudio (2022.07 and later) bundle a copy of Quarto, so you may already have it. Check by opening the Terminal tab inside RStudio (not your system terminal) and running:\nquarto --version\nIf that prints a version number, you’re done with this step. If it says the command is not found, install Quarto directly from the Quarto download page for your operating system, then restart RStudio and check again."
-  },
-  {
-    "objectID": "tutorials/00-setup/index.html#step-4-install-git-and-clone-this-repository",
-    "href": "tutorials/00-setup/index.html#step-4-install-git-and-clone-this-repository",
-    "title": "Tutorial 00: Setup",
-    "section": "Step 4 — Install Git and clone this repository",
-    "text": "Step 4 — Install Git and clone this repository\nGit is the version control tool this repository is stored in. Installing it lets RStudio pull down a copy of all the tutorials, rather than you downloading files one at a time.\n\nWindowsmacOS\n\n\n\nGo to the Git for Windows download page.\nDownload and run the installer, accepting the default options throughout.\n\n\n\nInstalling the Xcode command line tools in Step 1 already installed Git. Confirm it’s available by opening Terminal and running:\ngit --version\nIf that prints a version number, you’re done. If not, install Git from the Git downloads page.\n\n\n\nNow clone the repository using RStudio’s built-in Git integration:\n\nIn RStudio, go to File &gt; New Project… &gt; Version Control &gt; Git.\nIn “Repository URL”, paste: https://github.com/tomszar/single-cell_tutorials.git\nChoose a location on your computer for the project to live, then click Create Project.\n\nRStudio will download the repository and reopen itself with the project loaded — you’ll see the tutorial folders (tutorials/00-setup, tutorials/01-read-h5ad, …) in the Files pane.\n\n\n\n\n\n\nNoteJust want to read the tutorials first?\n\n\n\nYou don’t need to clone anything to read them. The rendered site is published at https://tomszar.github.io/single-cell_tutorials/ and always reflects the latest version on GitHub. Cloning is only required once you want to run the code chunks yourself.\n\n\n\n\n\n\n\n\nWarningRStudio’s New Project dialog doesn’t show a Git option\n\n\n\nThis means RStudio can’t find your Git installation. Restart RStudio after installing Git (Step 4 above) and try again. If it’s still missing, check Tools &gt; Global Options &gt; Git/SVN and confirm a path to the Git executable is listed."
-  },
-  {
-    "objectID": "tutorials/00-setup/index.html#step-5-install-the-basic-r-packages",
-    "href": "tutorials/00-setup/index.html#step-5-install-the-basic-r-packages",
-    "title": "Tutorial 00: Setup",
-    "section": "Step 5 — Install the basic R packages",
-    "text": "Step 5 — Install the basic R packages\nOpen RStudio, and in the Console pane run the following. This installs tidyverse (data wrangling and plotting, used throughout this series for basic manipulation and visualization) and BiocManager (the installer for Bioconductor packages, which later tutorials use for single-cell-specific tools).\n\ninstall.packages(c(\"tidyverse\", \"BiocManager\"))\n\nThis step downloads and compiles packages, so it can take a few minutes the first time. Package-specific requirements for each tutorial (e.g. schard, SingleCellExperiment) are installed separately within that tutorial — this step only covers what’s shared by all of them.\n\n\n\n\n\n\nWarningInstallation fails with a compilation error\n\n\n\nOn macOS, confirm the Xcode command line tools are installed (Step 1). On Windows, confirm Rtools is installed and matches your R version. Restart RStudio after installing either and try again."
-  },
-  {
-    "objectID": "tutorials/00-setup/index.html#step-6-run-a-notebook-interactively",
-    "href": "tutorials/00-setup/index.html#step-6-run-a-notebook-interactively",
-    "title": "Tutorial 00: Setup",
-    "section": "Step 6 — Run a notebook interactively",
-    "text": "Step 6 — Run a notebook interactively\nThis is the check that everything is wired together correctly: R, RStudio, and Quarto’s ability to run code chunks interactively.\n\nIn the project you cloned in Step 4, use the Files pane to open tutorials/00-setup/index.qmd (if the project isn’t already open, use File &gt; Open Project… and select the .Rproj file in the folder you cloned into).\nScroll down to the code chunk below. Click the green “play” arrow in the top-right corner of the chunk (or place your cursor inside it and press Cmd+Enter on macOS / Ctrl+Enter on Windows) to run just that chunk.\n\n\nlibrary(tidyverse)\n\nsummary(mtcars)\n\nggplot(mtcars, aes(x = wt, y = mpg)) +\n  geom_point() +\n  labs(\n    title = \"Fuel efficiency vs. weight\",\n    x = \"Weight (1000 lbs)\",\n    y = \"Miles per gallon\"\n  )\n\nIf it worked, a table summary appears first, followed by a scatter plot, both shown inline underneath the chunk (not in a separate window). That inline, run-as-you-go behavior is what every later tutorial relies on: you’ll run one chunk, look at the result, then decide what to do next — rather than running a whole script at once."
-  },
-  {
-    "objectID": "tutorials/00-setup/index.html#if-something-breaks",
-    "href": "tutorials/00-setup/index.html#if-something-breaks",
-    "title": "Tutorial 00: Setup",
-    "section": "If something breaks",
-    "text": "If something breaks\n\n\n\n\n\n\nWarningRStudio can’t find R\n\n\n\nReinstall R (Step 1), then fully quit and reopen RStudio. On Windows, check Tools &gt; Global Options &gt; General and confirm an R version is listed under “R version”.\n\n\n\n\n\n\n\n\nWarningquarto --version is not found\n\n\n\nInstall Quarto directly from the Quarto download page, then restart RStudio.\n\n\n\n\n\n\n\n\nWarningThe chunk runs but no plot appears\n\n\n\nConfirm the chunk actually loaded tidyverse without an error above the plot — scroll up and check for a red error message. If tidyverse failed to install in Step 5, reinstall it and re-run the chunk.\n\n\n\n\n\n\n\n\nWarningPackage installation asks to compile from source and hangs or fails\n\n\n\nAnswer “no” if prompted to compile from source and let it use the pre-built binary instead. If it still fails, revisit the compiler requirements in Step 1 (Rtools on Windows, Xcode command line tools on macOS)."
-  },
-  {
-    "objectID": "tutorials/00-setup/index.html#where-this-goes-next",
-    "href": "tutorials/00-setup/index.html#where-this-goes-next",
-    "title": "Tutorial 00: Setup",
-    "section": "Where this goes next",
-    "text": "Where this goes next\nWith R, RStudio, and Quarto confirmed working, you’re ready for Tutorial 01: Read an H5AD file, where you’ll load real single-cell data from the SEA-AD atlas into R."
-  },
-  {
     "objectID": "index.html",
     "href": "index.html",
     "title": "Single-cell analysis tutorials",
@@ -152,5 +75,82 @@
     "title": "Opening SEA-AD single-cell files in R",
     "section": "Where this goes next",
     "text": "Where this goes next\nYou now have a SingleCellExperiment for one donor and know where sex, pathology, and cell type live in it. From here, the project tracks diverge:\n\nPseudobulk analysis: repeat this loading process over donors, then perform per-donor pseudobulk aggregation.\nTrajectory analysis: run PCA and UMAP on your chosen cell type, then anchor the slingshot trajectory in low-pathology cells.\n\nBring your variable dictionary to the next check-in."
+  },
+  {
+    "objectID": "tutorials/00-setup/index.html",
+    "href": "tutorials/00-setup/index.html",
+    "title": "Tutorial 00: Setup",
+    "section": "",
+    "text": "This tutorial gets your computer ready for the rest of the series. There is no biology or single-cell data here — just installing the tools and confirming, interactively, that they work together. By the end you will have R, RStudio, Quarto, and Git installed, this repository cloned to your computer, a handful of commonly used R packages available, and you will have run a code chunk inside RStudio and seen its output.\nDo this once, before Tutorial 01."
+  },
+  {
+    "objectID": "tutorials/00-setup/index.html#what-youll-have-when-youre-done",
+    "href": "tutorials/00-setup/index.html#what-youll-have-when-youre-done",
+    "title": "Tutorial 00: Setup",
+    "section": "What you’ll have when you’re done",
+    "text": "What you’ll have when you’re done\n\nR and RStudio installed and opening correctly.\nQuarto installed (or confirmed already bundled with your RStudio).\nGit installed, and this repository cloned to your computer as an RStudio project.\nA small set of R packages used across these tutorials.\nA .qmd notebook you have opened in RStudio, run interactively chunk by chunk, and seen produce output (a table and a plot)."
+  },
+  {
+    "objectID": "tutorials/00-setup/index.html#before-you-start",
+    "href": "tutorials/00-setup/index.html#before-you-start",
+    "title": "Tutorial 00: Setup",
+    "section": "Before you start",
+    "text": "Before you start\nYou need administrator rights on your computer (to install software), an internet connection, and about 15–20 minutes. Instructions are given for Windows and macOS separately — follow the column for your operating system."
+  },
+  {
+    "objectID": "tutorials/00-setup/index.html#step-1-install-r",
+    "href": "tutorials/00-setup/index.html#step-1-install-r",
+    "title": "Tutorial 00: Setup",
+    "section": "Step 1 — Install R",
+    "text": "Step 1 — Install R\nR is the language; you’ll install RStudio next as the editor you actually work in.\n\nWindowsmacOS\n\n\n\nGo to the CRAN download page for Windows.\nClick the top link (e.g. “Download R-4.x.x for Windows”).\nRun the downloaded .exe installer, accepting the default options.\nAlso install Rtools, matching your R version. Rtools provides the compiler some R packages need to install from source. It is a separate installer from R itself.\n\n\n\n\nGo to the CRAN download page for macOS.\nDownload the .pkg file matching your Mac: the arm64 build for Apple Silicon (M1/M2/M3/M4), the x86_64 build for an older Intel Mac. If you’re not sure which chip you have, check via the Apple menu &gt; About This Mac.\nRun the downloaded .pkg installer, accepting the default options.\nInstall the Xcode command line tools, which some R packages need to compile from source. Open Terminal and run:\nxcode-select --install\nIf a dialog says they’re already installed, you’re set."
+  },
+  {
+    "objectID": "tutorials/00-setup/index.html#step-2-install-rstudio",
+    "href": "tutorials/00-setup/index.html#step-2-install-rstudio",
+    "title": "Tutorial 00: Setup",
+    "section": "Step 2 — Install RStudio",
+    "text": "Step 2 — Install RStudio\nRStudio is the desktop application you’ll use to write and run code, view plots, and manage files.\n\nWindowsmacOS\n\n\n\nGo to the RStudio Desktop download page.\nDownload the Windows installer and run it, accepting the default options.\n\n\n\n\nGo to the RStudio Desktop download page.\nDownload the macOS installer (.dmg), open it, and drag RStudio into Applications.\n\n\n\n\nOpen RStudio once it’s installed. It should start without errors and show panes for the console, environment, files, and plots. If RStudio reports it cannot find an R installation, revisit Step 1."
+  },
+  {
+    "objectID": "tutorials/00-setup/index.html#step-3-install-quarto",
+    "href": "tutorials/00-setup/index.html#step-3-install-quarto",
+    "title": "Tutorial 00: Setup",
+    "section": "Step 3 — Install Quarto",
+    "text": "Step 3 — Install Quarto\nThese tutorials are written in Quarto (.qmd) files. Recent versions of RStudio (2022.07 and later) bundle a copy of Quarto, so you may already have it. Check by opening the Terminal tab inside RStudio (not your system terminal) and running:\nquarto --version\nIf that prints a version number, you’re done with this step. If it says the command is not found, install Quarto directly from the Quarto download page for your operating system, then restart RStudio and check again."
+  },
+  {
+    "objectID": "tutorials/00-setup/index.html#step-4-install-git-and-clone-this-repository",
+    "href": "tutorials/00-setup/index.html#step-4-install-git-and-clone-this-repository",
+    "title": "Tutorial 00: Setup",
+    "section": "Step 4 — Install Git and clone this repository",
+    "text": "Step 4 — Install Git and clone this repository\nGit is the version control tool this repository is stored in. Installing it lets RStudio pull down a copy of all the tutorials, rather than you downloading files one at a time.\n\nWindowsmacOS\n\n\n\nGo to the Git for Windows download page.\nDownload and run the installer, accepting the default options throughout.\n\n\n\nInstalling the Xcode command line tools in Step 1 already installed Git. Confirm it’s available by opening Terminal and running:\ngit --version\nIf that prints a version number, you’re done. If not, install Git from the Git downloads page.\n\n\n\nNow clone the repository using RStudio’s built-in Git integration:\n\nIn RStudio, go to File &gt; New Project… &gt; Version Control &gt; Git.\nIn “Repository URL”, paste: https://github.com/tomszar/single-cell_tutorials.git\nChoose a location on your computer for the project to live, then click Create Project.\n\nRStudio will download the repository and reopen itself with the project loaded — you’ll see the tutorial folders (tutorials/00-setup, tutorials/01-read-h5ad, …) in the Files pane.\n\n\n\n\n\n\nNoteJust want to read the tutorials first?\n\n\n\nYou don’t need to clone anything to read them. The rendered site is published at https://tomszar.github.io/single-cell_tutorials/ and always reflects the latest version on GitHub. Cloning is only required once you want to run the code chunks yourself.\n\n\n\n\n\n\n\n\nWarningRStudio’s New Project dialog doesn’t show a Git option\n\n\n\nThis means RStudio can’t find your Git installation. Restart RStudio after installing Git (Step 4 above) and try again. If it’s still missing, check Tools &gt; Global Options &gt; Git/SVN and confirm a path to the Git executable is listed."
+  },
+  {
+    "objectID": "tutorials/00-setup/index.html#step-5-install-the-basic-r-packages",
+    "href": "tutorials/00-setup/index.html#step-5-install-the-basic-r-packages",
+    "title": "Tutorial 00: Setup",
+    "section": "Step 5 — Install the basic R packages",
+    "text": "Step 5 — Install the basic R packages\nOpen RStudio, and in the Console pane run the following. This installs tidyverse (data wrangling and plotting, used throughout this series for basic manipulation and visualization) and BiocManager (the installer for Bioconductor packages, which later tutorials use for single-cell-specific tools).\n\ninstall.packages(c(\"tidyverse\", \"BiocManager\"))\n\nThis step downloads and compiles packages, so it can take a few minutes the first time. Package-specific requirements for each tutorial (e.g. schard, SingleCellExperiment) are installed separately within that tutorial — this step only covers what’s shared by all of them.\n\n\n\n\n\n\nWarningInstallation fails with a compilation error\n\n\n\nOn macOS, confirm the Xcode command line tools are installed (Step 1). On Windows, confirm Rtools is installed and matches your R version. Restart RStudio after installing either and try again."
+  },
+  {
+    "objectID": "tutorials/00-setup/index.html#step-6-run-a-notebook-interactively",
+    "href": "tutorials/00-setup/index.html#step-6-run-a-notebook-interactively",
+    "title": "Tutorial 00: Setup",
+    "section": "Step 6 — Run a notebook interactively",
+    "text": "Step 6 — Run a notebook interactively\nThis is the check that everything is wired together correctly: R, RStudio, and Quarto’s ability to run code chunks interactively.\n\nIn the project you cloned in Step 4, use the Files pane to open tutorials/00-setup/index.qmd (if the project isn’t already open, use File &gt; Open Project… and select the .Rproj file in the folder you cloned into).\nScroll down to the code chunk below. Click the green “play” arrow in the top-right corner of the chunk (or place your cursor inside it and press Cmd+Enter on macOS / Ctrl+Enter on Windows) to run just that chunk.\n\n\nlibrary(tidyverse)\n\nsummary(mtcars)\n\nggplot(mtcars, aes(x = wt, y = mpg)) +\n  geom_point() +\n  labs(\n    title = \"Fuel efficiency vs. weight\",\n    x = \"Weight (1000 lbs)\",\n    y = \"Miles per gallon\"\n  )\n\nIf it worked, a table summary appears first, followed by a scatter plot, both shown inline underneath the chunk (not in a separate window). That inline, run-as-you-go behavior is what every later tutorial relies on: you’ll run one chunk, look at the result, then decide what to do next — rather than running a whole script at once."
+  },
+  {
+    "objectID": "tutorials/00-setup/index.html#if-something-breaks",
+    "href": "tutorials/00-setup/index.html#if-something-breaks",
+    "title": "Tutorial 00: Setup",
+    "section": "If something breaks",
+    "text": "If something breaks\n\n\n\n\n\n\nWarningRStudio can’t find R\n\n\n\nReinstall R (Step 1), then fully quit and reopen RStudio. On Windows, check Tools &gt; Global Options &gt; General and confirm an R version is listed under “R version”.\n\n\n\n\n\n\n\n\nWarningquarto --version is not found\n\n\n\nInstall Quarto directly from the Quarto download page, then restart RStudio.\n\n\n\n\n\n\n\n\nWarningThe chunk runs but no plot appears\n\n\n\nConfirm the chunk actually loaded tidyverse without an error above the plot — scroll up and check for a red error message. If tidyverse failed to install in Step 5, reinstall it and re-run the chunk.\n\n\n\n\n\n\n\n\nWarningPackage installation asks to compile from source and hangs or fails\n\n\n\nAnswer “no” if prompted to compile from source and let it use the pre-built binary instead. If it still fails, revisit the compiler requirements in Step 1 (Rtools on Windows, Xcode command line tools on macOS)."
+  },
+  {
+    "objectID": "tutorials/00-setup/index.html#where-this-goes-next",
+    "href": "tutorials/00-setup/index.html#where-this-goes-next",
+    "title": "Tutorial 00: Setup",
+    "section": "Where this goes next",
+    "text": "Where this goes next\nWith R, RStudio, and Quarto confirmed working, you’re ready for Tutorial 01: Read an H5AD file, where you’ll load real single-cell data from the SEA-AD atlas into R."
   }
 ]
