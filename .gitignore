@@ -24,6 +24,9 @@
 # JetBrains IDE files
 .idea/
 
+# direnv
+.direnv/
+
 # produced vignettes
 vignettes/*.html
 vignettes/*.pdf

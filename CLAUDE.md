@@ -17,6 +17,15 @@ quarto preview        # live-reload local preview of the website
 quarto render          # build the static site (output goes to _site/, gitignored)
 ```
 
+On NixOS (or any machine with Nix installed), `nix develop` (or `direnv
+allow`, since `.envrc` runs `use flake`) drops you into a shell with R,
+Quarto, and the packages tutorials currently need (tidyverse, BiocManager,
+rhdf5, SingleCellExperiment, Matrix, schard) already built — this sidesteps
+`install.packages`, which doesn't work out of the box on NixOS. `flake.nix`
+is a convenience for Nix users only; it is not the canonical dependency list.
+When a tutorial's setup step starts requiring a new package, add it to
+`flake.nix`'s `rEnv` package list too so the two stay in sync.
+
 There is no package manager manifest (e.g. `renv`) yet — R package
 dependencies are installed ad hoc via `install.packages` / `BiocManager` /
 `remotes` inside the tutorial `.qmd` files themselves. When adding a tutorial,
