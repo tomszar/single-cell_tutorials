@@ -21,6 +21,9 @@
 # RStudio files
 .Rproj.user/
 
+# JetBrains IDE files
+.idea/
+
 # produced vignettes
 vignettes/*.html
 vignettes/*.pdf
