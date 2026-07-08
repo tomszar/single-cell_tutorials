@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Single-cell analysis tutorials</title>
+<title>roadmap – Single-cell analysis tutorials</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -92,7 +92,7 @@ ul.task-list li input[type="checkbox"] {
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
-    <a class="nav-link active" href="./index.html" aria-current="page"> 
+    <a class="nav-link" href="./index.html"> 
 <span class="menu-text">Home</span></a>
   </li>  
   <li class="nav-item">
@@ -123,42 +123,119 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#tutorials" id="toc-tutorials" class="nav-link active" data-scroll-target="#tutorials">Tutorials</a></li>
+  <li><a href="#roadmap" id="toc-roadmap" class="nav-link active" data-scroll-target="#roadmap">Roadmap</a>
+  <ul class="collapse">
+  <li><a href="#status" id="toc-status" class="nav-link" data-scroll-target="#status">Status</a></li>
+  <li><a href="#preprocessing" id="toc-preprocessing" class="nav-link" data-scroll-target="#preprocessing">02 — Preprocessing</a></li>
+  <li><a href="#after-02-the-two-tracks" id="toc-after-02-the-two-tracks" class="nav-link" data-scroll-target="#after-02-the-two-tracks">After 02: the two tracks</a>
+  <ul class="collapse">
+  <li><a href="#a-pseudobulk-track" id="toc-a-pseudobulk-track" class="nav-link" data-scroll-target="#a-pseudobulk-track">03a — Pseudobulk track</a></li>
+  <li><a href="#b-trajectory-track" id="toc-b-trajectory-track" class="nav-link" data-scroll-target="#b-trajectory-track">03b — Trajectory track</a></li>
+  </ul></li>
+  <li><a href="#open-questions" id="toc-open-questions" class="nav-link" data-scroll-target="#open-questions">Open questions</a></li>
+  </ul></li>
   </ul>
 </nav>
     </div>
 <!-- main -->
-<main class="content" id="quarto-document-content">
-
-<header id="title-block-header" class="quarto-title-block default">
-<div class="quarto-title">
-<h1 class="title">Single-cell analysis tutorials</h1>
-</div>
+<main class="content" id="quarto-document-content"><header id="title-block-header" class="quarto-title-block"></header>
 
 
 
-<div class="quarto-title-meta">
 
-    
-  
-    
-  </div>
-  
-
-
-</header>
-
-
-<p>This site contains hands-on single-cell analysis tutorials in R using SEA-AD data.</p>
-<section id="tutorials" class="level2">
-<h2 class="anchored" data-anchor-id="tutorials">Tutorials</h2>
+<section id="roadmap" class="level1">
+<h1>Roadmap</h1>
+<p>Planned sequence for the SEA-AD single-cell tutorial series. This file records <em>intent and ordering</em>; it is not a spec. Each tutorial’s authoritative content lives in its own <code>tutorials/NN-slug/index.qmd</code>. Update this file when the plan changes, and keep <code>_quarto.yml</code> and <code>index.qmd</code> in sync as tutorials land.</p>
+<p>Conventions (see <code>CLAUDE.md</code> / <code>AGENTS.md</code>): one directory per tutorial with a numeric prefix, written in R as Quarto <code>.qmd</code>, notebook-style and runnable top-to-bottom in a clean session, using a single-donor SEA-AD file to keep runtimes practical for a class.</p>
+<section id="status" class="level2">
+<h2 class="anchored" data-anchor-id="status">Status</h2>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 14%">
+<col style="width: 47%">
+<col style="width: 38%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>#</th>
+<th>Tutorial</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>00</td>
+<td>Setup — install R, RStudio, Quarto, Git; run a notebook</td>
+<td>Done</td>
+</tr>
+<tr class="even">
+<td>01</td>
+<td>Read H5AD — load one donor into a <code>SingleCellExperiment</code>, locate metadata</td>
+<td>Done</td>
+</tr>
+<tr class="odd">
+<td>02</td>
+<td>Preprocessing — QC, normalization, feature selection, dimensionality reduction</td>
+<td>Done</td>
+</tr>
+<tr class="even">
+<td>03a</td>
+<td>Pseudobulk track</td>
+<td>Planned</td>
+</tr>
+<tr class="odd">
+<td>03b</td>
+<td>Trajectory track</td>
+<td>Planned</td>
+</tr>
+</tbody>
+</table>
+<p>Tutorials 00 and 01 both load data and orient the reader in the SCE. The two analysis tracks named at the end of tutorial 01 (pseudobulk, trajectory) both assume a clean, normalized object. Tutorial 02 produces it and is the shared prerequisite for both tracks.</p>
+</section>
+<section id="preprocessing" class="level2">
+<h2 class="anchored" data-anchor-id="preprocessing">02 — Preprocessing</h2>
+<p>Take the raw single-donor <code>SingleCellExperiment</code> from tutorial 01 and turn it into a QC’d, normalized object with reduced dimensions, ready for downstream analysis. Stay on one donor so it runs in a class session.</p>
+<p><strong>Learning objectives</strong></p>
 <ul>
-<li><a href="./tutorials/00-setup/index.html">Tutorial 00: Setup</a></li>
-<li><a href="./tutorials/01-read-h5ad/index.html">Tutorial 01: Read an H5AD file</a></li>
-<li><a href="./tutorials/02-preprocessing/index.html">Tutorial 02: Preprocessing</a></li>
+<li>Understand <em>why</em> single-cell data needs QC and normalization before analysis.</li>
+<li>Compute and interpret per-cell QC metrics; filter low-quality cells with thresholds the reader can justify rather than accept blindly.</li>
+<li>Normalize counts and select highly variable genes.</li>
+<li>Reduce dimensionality (PCA → UMAP) and read the resulting embedding.</li>
+</ul>
+<p><strong>Prerequisites:</strong> tutorials 00 and 01; a loaded single-donor SCE.</p>
+<p><strong>Outline</strong></p>
+<ol type="1">
+<li>QC metrics — library size, genes detected, % mitochondrial reads (<code>scater</code> / <code>scuttle</code>).</li>
+<li>Filtering low-quality cells, with explicit, defended thresholds (and a note on fixed vs.&nbsp;adaptive/MAD-based cutoffs).</li>
+<li>Normalization — log-normalization, with <code>scran</code> pooling shown as the principled alternative.</li>
+<li>Highly variable gene selection.</li>
+<li>Dimensionality reduction — PCA, then UMAP; set a seed for UMAP.</li>
+</ol>
+<p><strong>Package requirements (document in the tutorial’s setup step):</strong> <code>scater</code>, <code>scuttle</code>, <code>scran</code>, <code>SingleCellExperiment</code> (and its UMAP dependency, e.g. <code>uwot</code>). Add any new package to <code>flake.nix</code>’s <code>rEnv</code> list too.</p>
+<p><strong>Expected outcome:</strong> a filtered, normalized SCE carrying <code>logcounts</code>, a set of highly variable genes, and <code>PCA</code> / <code>UMAP</code> in <code>reducedDims()</code>.</p>
+</section>
+<section id="after-02-the-two-tracks" class="level2">
+<h2 class="anchored" data-anchor-id="after-02-the-two-tracks">After 02: the two tracks</h2>
+<p>Both start from the tutorial-02 output and can be written in either order.</p>
+<section id="a-pseudobulk-track" class="level3">
+<h3 class="anchored" data-anchor-id="a-pseudobulk-track">03a — Pseudobulk track</h3>
+<p>Repeat loading across multiple donors, aggregate counts per donor × cell type into pseudobulk profiles, and run a donor-level differential expression comparison across AD pathology. Emphasize why pseudobulk (donor as the unit of replication) is the statistically honest approach for cross-condition comparisons, versus per-cell tests.</p>
+<p><em>Sketch:</em> multi-donor loading → per-donor/per-subclass aggregation (<code>aggregateAcrossCells</code>) → DE with an established bulk method (e.g.&nbsp;<code>edgeR</code> / <code>limma-voom</code>). Package and data requirements to be pinned when drafted.</p>
+</section>
+<section id="b-trajectory-track" class="level3">
+<h3 class="anchored" data-anchor-id="b-trajectory-track">03b — Trajectory track</h3>
+<p>On a single chosen cell type, use the PCA/UMAP from tutorial 02 to fit a <code>slingshot</code> trajectory, anchoring it in low-pathology cells, and interpret the inferred progression against the pathology axis.</p>
+<p><em>Sketch:</em> subset one cell type → embedding from tutorial 02 → <code>slingshot</code> lineage/pseudotime with a defined starting cluster → interpret against the continuous pathology score. Package and data requirements to be pinned when drafted.</p>
+</section>
+</section>
+<section id="open-questions" class="level2">
+<h2 class="anchored" data-anchor-id="open-questions">Open questions</h2>
+<ul>
+<li>Whether feature selection + dimensionality reduction stay in 02 or split into their own tutorial if 02 gets too long for one session.</li>
 </ul>
 
 
+</section>
 </section>
 
 </main> <!-- /main -->

@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="IPRE Winter 2026 · MOTCO · research line IPI-26-1206">
+
+<title>Preprocessing single-cell data – Single-cell analysis tutorials</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-2a1ff8acbc8026a50e853ea6c4bd46a5.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">Single-cell analysis tutorials</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../tutorials/00-setup/index.html"> 
+<span class="menu-text">00: Setup</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../tutorials/01-read-h5ad/index.html"> 
+<span class="menu-text">01: Read H5AD</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link active" href="../../tutorials/02-preprocessing/index.html" aria-current="page"> 
+<span class="menu-text">02: Preprocessing</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#learning-objectives" id="toc-learning-objectives" class="nav-link active" data-scroll-target="#learning-objectives">Learning objectives</a></li>
+  <li><a href="#step-1-install-the-r-packages" id="toc-step-1-install-the-r-packages" class="nav-link" data-scroll-target="#step-1-install-the-r-packages">Step 1 — Install the R packages</a></li>
+  <li><a href="#step-2-reload-the-donor-object-and-get-the-raw-counts" id="toc-step-2-reload-the-donor-object-and-get-the-raw-counts" class="nav-link" data-scroll-target="#step-2-reload-the-donor-object-and-get-the-raw-counts">Step 2 — Reload the donor object and get the raw counts</a></li>
+  <li><a href="#step-3-compute-per-cell-qc-metrics" id="toc-step-3-compute-per-cell-qc-metrics" class="nav-link" data-scroll-target="#step-3-compute-per-cell-qc-metrics">Step 3 — Compute per-cell QC metrics</a></li>
+  <li><a href="#step-4-filter-low-quality-cells" id="toc-step-4-filter-low-quality-cells" class="nav-link" data-scroll-target="#step-4-filter-low-quality-cells">Step 4 — Filter low-quality cells</a>
+  <ul class="collapse">
+  <li><a href="#fixed-vs.-adaptive-thresholds" id="toc-fixed-vs.-adaptive-thresholds" class="nav-link" data-scroll-target="#fixed-vs.-adaptive-thresholds">Fixed vs.&nbsp;adaptive thresholds</a></li>
+  </ul></li>
+  <li><a href="#step-5-normalize" id="toc-step-5-normalize" class="nav-link" data-scroll-target="#step-5-normalize">Step 5 — Normalize</a>
+  <ul class="collapse">
+  <li><a href="#the-quick-way-library-size-normalization" id="toc-the-quick-way-library-size-normalization" class="nav-link" data-scroll-target="#the-quick-way-library-size-normalization">The quick way: library-size normalization</a></li>
+  <li><a href="#the-principled-way-scran-pooling" id="toc-the-principled-way-scran-pooling" class="nav-link" data-scroll-target="#the-principled-way-scran-pooling">The principled way: <code>scran</code> pooling</a></li>
+  </ul></li>
+  <li><a href="#step-6-select-highly-variable-genes" id="toc-step-6-select-highly-variable-genes" class="nav-link" data-scroll-target="#step-6-select-highly-variable-genes">Step 6 — Select highly variable genes</a></li>
+  <li><a href="#step-7-reduce-dimensionality" id="toc-step-7-reduce-dimensionality" class="nav-link" data-scroll-target="#step-7-reduce-dimensionality">Step 7 — Reduce dimensionality</a></li>
+  <li><a href="#step-8-save-the-preprocessed-object" id="toc-step-8-save-the-preprocessed-object" class="nav-link" data-scroll-target="#step-8-save-the-preprocessed-object">Step 8 — Save the preprocessed object</a></li>
+  <li><a href="#what-you-produced" id="toc-what-you-produced" class="nav-link" data-scroll-target="#what-you-produced">What you produced</a></li>
+  <li><a href="#where-this-goes-next" id="toc-where-this-goes-next" class="nav-link" data-scroll-target="#where-this-goes-next">Where this goes next</a></li>
+  <li><a href="#if-something-breaks" id="toc-if-something-breaks" class="nav-link" data-scroll-target="#if-something-breaks">If something breaks</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Preprocessing single-cell data</h1>
+<p class="subtitle lead">QC, normalization, feature selection, and dimensionality reduction on one donor</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>IPRE Winter 2026 · MOTCO · research line IPI-26-1206 </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>In <a href="../../tutorials/01-read-h5ad/index.html">tutorial 01</a> you loaded one SEA-AD donor into a <code>SingleCellExperiment</code> and found where the cell-type labels, sex, and pathology score live. Quality control and normalization both start from <strong>raw counts</strong>: the number of times each gene was detected in each nucleus, straight from the sequencer. Raw counts are not yet something you can compare cell to cell, because they are dominated by technical noise—some droplets captured more RNA than others, some are empty or damaged, and a handful of highly expressed genes drown out the rest. SEA-AD’s files actually ship <em>two</em> versions of the matrix: a convenience copy that is already normalized, and the raw counts stored alongside it. Step 2 shows how to tell them apart and grab the raw one.</p>
+<p>Preprocessing is the step that turns raw counts into an object you can actually analyze. By the end you will have thrown out low-quality nuclei, put the remaining cells on a common scale, picked the genes that carry biological signal, and compressed the data down to a two-dimensional map you can look at. Both project tracks—pseudobulk and trajectory—start from this object, so this tutorial is the shared foundation for everything that follows.</p>
+<p>We stay on the single donor from tutorial 01 (<code>H20.33.001</code>) so the whole thing runs in a class session.</p>
+<section id="learning-objectives" class="level2">
+<h2 class="anchored" data-anchor-id="learning-objectives">Learning objectives</h2>
+<p>By the end of this tutorial you should be able to:</p>
+<ul>
+<li>Explain <strong>why</strong> single-cell counts need quality control and normalization before any downstream analysis.</li>
+<li>Compute per-cell QC metrics (library size, genes detected, % mitochondrial reads) and interpret their distributions.</li>
+<li>Filter low-quality cells with thresholds you can <em>defend</em>, and explain the difference between fixed and adaptive (MAD-based) cutoffs.</li>
+<li>Normalize counts—both the quick log-normalization and the more principled <code>scran</code> pooling approach—and say what each one corrects for.</li>
+<li>Select highly variable genes and explain why we don’t just use all of them.</li>
+<li>Reduce dimensionality with PCA and then UMAP, set a seed, and read the resulting embedding.</li>
+</ul>
+<p><strong>Prerequisites:</strong> tutorials 00 and 01, and the donor <code>.h5ad</code> file already downloaded to <code>data/sea-ad/donor_H20.33.001.h5ad</code> under the repository root. This tutorial reuses that same file.</p>
+<p><strong>Expected outcome:</strong> a filtered, normalized <code>SingleCellExperiment</code> carrying a <code>logcounts</code> assay, a stored set of highly variable genes, and <code>PCA</code> and <code>UMAP</code> entries in <code>reducedDims()</code>—ready for either analysis track.</p>
+</section>
+<section id="step-1-install-the-r-packages" class="level2">
+<h2 class="anchored" data-anchor-id="step-1-install-the-r-packages">Step 1 — Install the R packages</h2>
+<p>You already have <code>schard</code> and <code>SingleCellExperiment</code> from tutorial 01. The new tools all come from Bioconductor and belong to the <a href="https://bioconductor.org/books/release/OSCA/"><code>scran</code>/<code>scater</code> ecosystem</a> built specifically for single-cell work:</p>
+<ul>
+<li><strong><code>scuttle</code></strong> — QC metrics and normalization helpers.</li>
+<li><strong><code>scran</code></strong> — pooling-based size factors and variance modeling for feature selection.</li>
+<li><strong><code>scater</code></strong> — PCA/UMAP wrappers and plotting.</li>
+</ul>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">requireNamespace</span>(<span class="st">"BiocManager"</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>)) {</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">install.packages</span>(<span class="st">"BiocManager"</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>BiocManager<span class="sc">::</span><span class="fu">install</span>(<span class="fu">c</span>(<span class="st">"scuttle"</span>, <span class="st">"scran"</span>, <span class="st">"scater"</span>, <span class="st">"uwot"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><code>uwot</code> is the package that actually computes the UMAP; <code>scater</code> calls it for us. If you are on the Nix dev shell, all of these are already built—you do not need to run <code>install.packages</code>.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Expect deprecation warnings">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Expect deprecation warnings
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>This tutorial uses the <code>scran</code>/<code>scater</code>/<code>scuttle</code> functions taught in the <a href="https://bioconductor.org/books/release/OSCA/">OSCA book</a>—the standard learning path for single-cell analysis in R. On very recent Bioconductor releases some of these functions print a deprecation notice pointing to the newer <code>scrapper</code> package. They still work exactly as described here, and the warnings are safe to ignore for this tutorial; we stay on the well-documented ecosystem so you can look up every step.</p>
+</div>
+</div>
+</section>
+<section id="step-2-reload-the-donor-object-and-get-the-raw-counts" class="level2">
+<h2 class="anchored" data-anchor-id="step-2-reload-the-donor-object-and-get-the-raw-counts">Step 2 — Reload the donor object and get the raw counts</h2>
+<p>Set R’s working directory to this tutorial’s folder (<strong>Session &gt; Set Working Directory &gt; To Source File Location</strong> in RStudio) and load the donor file from the shared <code>data/sea-ad/</code> folder.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(schard)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(SingleCellExperiment)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>h5 <span class="ot">&lt;-</span> <span class="st">"../../data/sea-ad/donor_H20.33.001.h5ad"</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>sce <span class="ot">&lt;-</span> schard<span class="sc">::</span><span class="fu">h5ad2sce</span>(h5)</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>sce</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><code>schard</code> loads the file’s main matrix, <code>X</code>. For SEA-AD that matrix is <strong>not raw counts</strong>—it is a log-normalized copy the authors precomputed for convenience. You can see this: the values are fractional and small, not the whole numbers a count matrix would have.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">assayNames</span>(sce)                 <span class="co"># "X"</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">range</span>(<span class="fu">assay</span>(sce, <span class="st">"X"</span>))          <span class="co"># small, non-integer values (max ~8)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>QC filtering and size-factor normalization both need the <em>raw</em> counts, so we fetch them. SEA-AD stores them in a separate layer called <code>UMIs</code>, which <code>schard::h5ad2Matrix</code> can read directly. It comes back without row and column names, so we copy them from the object, then store it as the <code>counts</code> assay.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>counts_mat <span class="ot">&lt;-</span> schard<span class="sc">::</span><span class="fu">h5ad2Matrix</span>(h5, <span class="st">"layers/UMIs"</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">dimnames</span>(counts_mat) <span class="ot">&lt;-</span> <span class="fu">dimnames</span>(sce)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="fu">counts</span>(sce) <span class="ot">&lt;-</span> counts_mat</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co"># We won't reuse SEA-AD's precomputed normalization; drop it to avoid confusion.</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="fu">assay</span>(sce, <span class="st">"X"</span>) <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="co"># The counts should now be non-negative whole numbers.</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="fu">counts</span>(sce)[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Why not just use the normalized `X`?">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Why not just use the normalized <code>X</code>?
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The point of this tutorial is to do QC and normalization yourself, with choices you can see and defend—starting from someone else’s normalized matrix would skip exactly the steps you are here to learn. You also <em>can’t</em> do count-based QC (library size, mitochondrial fraction) on values that are no longer counts. Different datasets hide their raw counts in different places (a <code>layers/</code> entry, an <code>.h5ad</code> <code>raw</code> slot, a separate file); always check before assuming the matrix you loaded is raw.</p>
+</div>
+</div>
+</section>
+<section id="step-3-compute-per-cell-qc-metrics" class="level2">
+<h2 class="anchored" data-anchor-id="step-3-compute-per-cell-qc-metrics">Step 3 — Compute per-cell QC metrics</h2>
+<p>A “cell” in this data is really one droplet’s worth of RNA, and not every droplet is a healthy cell. Three numbers tell you most of what you need:</p>
+<ul>
+<li><strong>Library size</strong> (<code>sum</code>): total counts in the cell. Very low means an empty or barely captured droplet; extremely high can signal a doublet (two cells in one droplet).</li>
+<li><strong>Genes detected</strong> (<code>detected</code>): how many distinct genes had at least one count. Low complexity is another empty-droplet signature.</li>
+<li><strong>Mitochondrial fraction</strong> (<code>subsets_Mito_percent</code>): the share of counts from mitochondrial genes. When a cell’s membrane ruptures, cytoplasmic RNA leaks out but mitochondrial RNA stays trapped, so a high mito fraction flags dying or damaged cells.</li>
+</ul>
+<p>To compute the mito fraction we first need to know which rows are mitochondrial genes. Real datasets don’t flag them for you, so look at what the row names and per-gene metadata actually contain before matching.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(<span class="fu">rownames</span>(sce))          <span class="co"># gene symbols in these files</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(<span class="fu">rowData</span>(sce))       <span class="co"># per-gene metadata columns</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(<span class="fu">rowData</span>(sce))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>In the SEA-AD donor files the row names are <strong>gene symbols</strong> (the Ensembl IDs live in <code>rowData(sce)$gene_ids</code>). Mitochondrial genes are the ones whose symbol starts with <code>MT-</code>, such as <code>MT-ND1</code>, so we can match on the row names directly. If you meet a dataset whose row names are Ensembl IDs instead, match on whichever <code>rowData</code> column holds the symbols.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(scuttle)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>is_mito <span class="ot">&lt;-</span> <span class="fu">grepl</span>(<span class="st">"^MT-"</span>, <span class="fu">rownames</span>(sce))</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(is_mito)                 <span class="co"># 13 — the mitochondrial protein-coding genes</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled" title="Sanity check">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Sanity check
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>If <code>sum(is_mito)</code> is <code>0</code>, you matched the wrong identifiers—the symbols are somewhere other than where you looked. If it is in the hundreds, you probably matched Ensembl IDs by accident. The human mitochondrial genome encodes 13 protein-coding genes, so a count of 13 is what you want here.</p>
+</div>
+</div>
+<p>Now compute the metrics and attach them to <code>colData(sce)</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>sce <span class="ot">&lt;-</span> <span class="fu">addPerCellQCMetrics</span>(sce, <span class="at">subsets =</span> <span class="fu">list</span>(<span class="at">Mito =</span> is_mito))</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co"># The new per-cell columns:</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(<span class="fu">colData</span>(sce))</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(sce<span class="sc">$</span>sum)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(sce<span class="sc">$</span>detected)</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(sce<span class="sc">$</span>subsets_Mito_percent)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="step-4-filter-low-quality-cells" class="level2">
+<h2 class="anchored" data-anchor-id="step-4-filter-low-quality-cells">Step 4 — Filter low-quality cells</h2>
+<p>Look at the distributions before you cut anything. Thresholds you can’t see the reason for are thresholds you can’t defend.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(scater)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="fu">plotColData</span>(sce, <span class="at">y =</span> <span class="st">"sum"</span>) <span class="sc">+</span> ggplot2<span class="sc">::</span><span class="fu">scale_y_log10</span>() <span class="sc">+</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">ggtitle</span>(<span class="st">"Library size"</span>)</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="fu">plotColData</span>(sce, <span class="at">y =</span> <span class="st">"detected"</span>) <span class="sc">+</span> ggplot2<span class="sc">::</span><span class="fu">scale_y_log10</span>() <span class="sc">+</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">ggtitle</span>(<span class="st">"Genes detected"</span>)</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="fu">plotColData</span>(sce, <span class="at">y =</span> <span class="st">"subsets_Mito_percent"</span>) <span class="sc">+</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">ggtitle</span>(<span class="st">"Mitochondrial %"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<section id="fixed-vs.-adaptive-thresholds" class="level3">
+<h3 class="anchored" data-anchor-id="fixed-vs.-adaptive-thresholds">Fixed vs.&nbsp;adaptive thresholds</h3>
+<p>There are two ways to pick cutoffs:</p>
+<ul>
+<li><strong>Fixed thresholds</strong> — e.g.&nbsp;“drop cells with fewer than 500 genes or more than 10% mito reads.” Simple and transparent, but the right number depends on the tissue, the protocol, and sequencing depth. A cutoff that is sensible for blood may throw away perfectly good neurons.</li>
+<li><strong>Adaptive thresholds</strong> — flag cells that are outliers <em>relative to this dataset</em>. The standard approach uses the <strong>median absolute deviation (MAD)</strong>: a cell is an outlier if it sits more than a few MADs from the median. This adapts to whatever the data’s own scale is, which is why it is the OSCA book’s default.</li>
+</ul>
+<p>We’ll use the adaptive approach with <code>perCellQCFilters</code>, which flags cells that are outliers on <em>low</em> library size, <em>low</em> genes detected, or <em>high</em> mito fraction—the three directions that indicate poor quality.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>qc <span class="ot">&lt;-</span> <span class="fu">perCellQCFilters</span>(</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  sce,</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">sub.fields =</span> <span class="st">"subsets_Mito_percent"</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="co"># How many cells each rule flags, and the total discarded:</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="fu">colSums</span>(<span class="fu">as.matrix</span>(qc))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p><code>perCellQCFilters</code> works on the log scale for size and complexity (counts are right-skewed) and flags high-mito cells in the upper tail. Attach its verdict, inspect it, then subset.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>sce<span class="sc">$</span>discard <span class="ot">&lt;-</span> qc<span class="sc">$</span>discard</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Compare discarded vs. kept cells to confirm we're cutting the bad tail, not</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co"># a biologically interesting population.</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="fu">plotColData</span>(sce, <span class="at">x =</span> <span class="st">"sum"</span>, <span class="at">y =</span> <span class="st">"subsets_Mito_percent"</span>, <span class="at">colour_by =</span> <span class="st">"discard"</span>) <span class="sc">+</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">scale_x_log10</span>()</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Keep only the cells that passed.</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>sce <span class="ot">&lt;-</span> sce[, <span class="sc">!</span>sce<span class="sc">$</span>discard]</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(sce)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Optional: try fixed thresholds">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Optional: try fixed thresholds
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>As an exercise, define your own fixed cutoffs and compare. Do they keep the same cells the adaptive rule kept?</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>manual_discard <span class="ot">&lt;-</span> sce<span class="sc">$</span>sum <span class="sc">&lt;</span> <span class="dv">500</span> <span class="sc">|</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  sce<span class="sc">$</span>detected <span class="sc">&lt;</span> <span class="dv">300</span> <span class="sc">|</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  sce<span class="sc">$</span>subsets_Mito_percent <span class="sc">&gt;</span> <span class="dv">10</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(manual_discard)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="step-5-normalize" class="level2">
+<h2 class="anchored" data-anchor-id="step-5-normalize">Step 5 — Normalize</h2>
+<p>Two cells with the same biological state can still have very different total counts purely because one was sequenced more deeply. Normalization removes that technical difference so expression is comparable across cells. We then take the log, which stabilizes variance and makes the highly expressed genes stop dominating.</p>
+<section id="the-quick-way-library-size-normalization" class="level3">
+<h3 class="anchored" data-anchor-id="the-quick-way-library-size-normalization">The quick way: library-size normalization</h3>
+<p>The simplest correction divides each cell’s counts by its library size (its size factor) and log-transforms. <code>logNormCounts</code> does both and stores the result in a new <code>logcounts</code> assay.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>sce <span class="ot">&lt;-</span> <span class="fu">logNormCounts</span>(sce)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">assayNames</span>(sce)              <span class="co"># now includes "logcounts"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="the-principled-way-scran-pooling" class="level3">
+<h3 class="anchored" data-anchor-id="the-principled-way-scran-pooling">The principled way: <code>scran</code> pooling</h3>
+<p>Library-size normalization assumes most genes are not differentially expressed between cells, which breaks down when cells are very different from one another. <code>scran</code> handles this by pooling many cells together to estimate size factors stably, then deconvolving them back to per-cell factors. It first groups roughly similar cells with <code>quickCluster</code> so the pooling stays within comparable cells.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(scran)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">100</span>)                <span class="co"># quickCluster uses randomness</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>clusters <span class="ot">&lt;-</span> <span class="fu">quickCluster</span>(sce)</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>sce <span class="ot">&lt;-</span> <span class="fu">computeSumFactors</span>(sce, <span class="at">clusters =</span> clusters)</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(<span class="fu">sizeFactors</span>(sce))    <span class="co"># should be positive, centered near 1</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Recompute logcounts using these better size factors.</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>sce <span class="ot">&lt;-</span> <span class="fu">logNormCounts</span>(sce)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>For a single, relatively homogeneous donor the two approaches give similar results, but the pooling method is the one to reach for as datasets get more heterogeneous. We keep its <code>logcounts</code> for the rest of the tutorial.</p>
+</section>
+</section>
+<section id="step-6-select-highly-variable-genes" class="level2">
+<h2 class="anchored" data-anchor-id="step-6-select-highly-variable-genes">Step 6 — Select highly variable genes</h2>
+<p>Most of the ~36,000 genes are either off or uniformly expressed and carry no information about how cells differ. Feeding all of them into PCA just adds noise. <strong>Highly variable genes (HVGs)</strong> are the genes whose variance across cells exceeds what we’d expect from technical noise alone—those are where the biological signal is.</p>
+<p><code>modelGeneVar</code> decomposes each gene’s variance into a technical trend (variance expected at that expression level) and the biological excess above it. <code>getTopHVGs</code> then ranks genes by that biological component.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>dec <span class="ot">&lt;-</span> <span class="fu">modelGeneVar</span>(sce)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Visualize the mean-variance trend: the curve is the technical expectation,</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="co"># points well above it are the interesting genes.</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(dec<span class="sc">$</span>mean, dec<span class="sc">$</span>total,</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab =</span> <span class="st">"Mean log-expression"</span>, <span class="at">ylab =</span> <span class="st">"Variance"</span>,</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>     <span class="at">main =</span> <span class="st">"Mean-variance trend"</span>)</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="fu">curve</span>(<span class="fu">metadata</span>(dec)<span class="sc">$</span><span class="fu">trend</span>(x), <span class="at">col =</span> <span class="st">"blue"</span>, <span class="at">add =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Take the top 2000 genes by biological variance.</span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>hvg <span class="ot">&lt;-</span> <span class="fu">getTopHVGs</span>(dec, <span class="at">n =</span> <span class="dv">2000</span>)</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(hvg)</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(hvg)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>2000 is a common default; more genes retain finer signal at the cost of more noise. This is a knob worth trying both ways once the pipeline works.</p>
+</section>
+<section id="step-7-reduce-dimensionality" class="level2">
+<h2 class="anchored" data-anchor-id="step-7-reduce-dimensionality">Step 7 — Reduce dimensionality</h2>
+<p>Even restricted to 2000 genes, the data lives in 2000-dimensional space. Two reductions get us to something interpretable:</p>
+<ol type="1">
+<li><strong>PCA</strong> finds the directions of greatest variation. The first few dozen principal components capture the dominant structure while filtering noise; downstream steps run on these instead of raw genes.</li>
+<li><strong>UMAP</strong> takes those PCs and lays them out in 2D for visualization. UMAP is for <em>looking</em>, not for quantitative claims—distances between far-apart clusters are not meaningful.</li>
+</ol>
+<p>Both are randomized, so set a seed before each for reproducibility.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1234</span>)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>sce <span class="ot">&lt;-</span> <span class="fu">runPCA</span>(sce, <span class="at">subset_row =</span> hvg, <span class="at">ncomponents =</span> <span class="dv">50</span>)</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="co"># How much variance each PC explains—look for where the curve flattens.</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>pct_var <span class="ot">&lt;-</span> <span class="fu">attr</span>(<span class="fu">reducedDim</span>(sce, <span class="st">"PCA"</span>), <span class="st">"percentVar"</span>)</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(pct_var, <span class="at">xlab =</span> <span class="st">"PC"</span>, <span class="at">ylab =</span> <span class="st">"% variance explained"</span>, <span class="at">type =</span> <span class="st">"b"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1234</span>)</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>sce <span class="ot">&lt;-</span> <span class="fu">runUMAP</span>(sce, <span class="at">dimred =</span> <span class="st">"PCA"</span>)</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="fu">reducedDimNames</span>(sce)         <span class="co"># "PCA" and "UMAP"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Now look at the embedding, colored by the cell-type labels from tutorial 01. If preprocessing worked, cells of the same <code>Subclass</code> should land together.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plotReducedDim</span>(sce, <span class="st">"UMAP"</span>, <span class="at">colour_by =</span> <span class="st">"Subclass"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled" title="Read the map critically">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Read the map critically
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Distinct, well-separated islands that match known cell types are a good sign. If everything is one blob, or if the clusters line up with library size instead of biology, revisit your QC and normalization—those are the usual culprits. Try coloring by <code>sum</code> or <code>subsets_Mito_percent</code> to check that technical variation isn’t driving the layout.</p>
+</div>
+</div>
+</section>
+<section id="step-8-save-the-preprocessed-object" class="level2">
+<h2 class="anchored" data-anchor-id="step-8-save-the-preprocessed-object">Step 8 — Save the preprocessed object</h2>
+<p>Both tracks start here, so save the result. The repo keeps generated analysis outputs in the top-level <code>outputs/</code> folder, which <code>.gitignore</code> already excludes from version control—so the object won’t get committed by accident.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(sce, <span class="st">"../../outputs/sce_preprocessed.rds"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The two analysis tracks reload it with <code>readRDS("../../outputs/sce_preprocessed.rds")</code>.</p>
+</section>
+<section id="what-you-produced" class="level2">
+<h2 class="anchored" data-anchor-id="what-you-produced">What you produced</h2>
+<p>Your <code>sce</code> now carries everything the downstream tracks need:</p>
+<ul>
+<li>a <code>logcounts</code> assay from <code>scran</code> pooling normalization,</li>
+<li>QC metrics in <code>colData(sce)</code> and the low-quality cells removed,</li>
+<li>a 2000-gene HVG set in <code>hvg</code>, and</li>
+<li><code>PCA</code> and <code>UMAP</code> in <code>reducedDims(sce)</code>.</li>
+</ul>
+</section>
+<section id="where-this-goes-next" class="level2">
+<h2 class="anchored" data-anchor-id="where-this-goes-next">Where this goes next</h2>
+<p>With a clean, normalized object in hand, the project tracks diverge:</p>
+<ul>
+<li><strong>Pseudobulk track:</strong> repeat loading across donors, aggregate counts per donor × cell type, and run a donor-level differential expression comparison across AD pathology.</li>
+<li><strong>Trajectory track:</strong> subset one cell type, reuse the PCA/UMAP you just computed, and fit a <code>slingshot</code> trajectory anchored in low-pathology cells.</li>
+</ul>
+</section>
+<section id="if-something-breaks" class="level2">
+<h2 class="anchored" data-anchor-id="if-something-breaks">If something breaks</h2>
+<div class="callout callout-style-default callout-warning callout-titled" title="`h5ad2Matrix` can't find `layers/UMIs`">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span><code>h5ad2Matrix</code> can’t find <code>layers/UMIs</code>
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The layer name is dataset-specific. List what the file contains with <code>rhdf5::h5ls("../../data/sea-ad/donor_H20.33.001.h5ad")</code> and look under <code>/layers</code> for the raw-count matrix, then pass that path to <code>h5ad2Matrix</code>.</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-warning callout-titled" title="`sum(is_mito)` is 0">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span><code>sum(is_mito)</code> is 0
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The row names aren’t the gene symbols you expected. Print <code>head(rownames(sce))</code> and <code>head(rowData(sce))</code>, find where symbols like <code>MT-ND1</code> live, and grep on that instead.</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-warning callout-titled" title="`runUMAP` cannot find uwot">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span><code>runUMAP</code> cannot find uwot
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Install it with <code>BiocManager::install("uwot")</code> (or <code>install.packages("uwot")</code>), then rerun Step 7.</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-warning callout-titled" title="Almost every cell is discarded in QC">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>Almost every cell is discarded in QC
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Adaptive thresholds assume most cells are good. If the donor file was already QC’d upstream, the MAD rule can over-flag. Inspect the distributions in Step 4 and, if needed, switch to explicit fixed thresholds you can justify.</p>
+</div>
+</div>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/tomszar\.github\.io\/single-cell_tutorials\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

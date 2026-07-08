@@ -2,14 +2,22 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://tomszar.github.io/single-cell_tutorials/index.html</loc>
-    <lastmod>2026-07-08T17:05:24.079Z</lastmod>
+    <lastmod>2026-07-08T18:36:31.558Z</lastmod>
   </url>
   <url>
     <loc>https://tomszar.github.io/single-cell_tutorials/tutorials/01-read-h5ad/index.html</loc>
-    <lastmod>2026-07-08T17:05:24.080Z</lastmod>
+    <lastmod>2026-07-08T18:36:31.558Z</lastmod>
+  </url>
+  <url>
+    <loc>https://tomszar.github.io/single-cell_tutorials/ROADMAP.html</loc>
+    <lastmod>2026-07-08T18:36:31.557Z</lastmod>
+  </url>
+  <url>
+    <loc>https://tomszar.github.io/single-cell_tutorials/tutorials/02-preprocessing/index.html</loc>
+    <lastmod>2026-07-08T18:36:31.558Z</lastmod>
   </url>
   <url>
     <loc>https://tomszar.github.io/single-cell_tutorials/tutorials/00-setup/index.html</loc>
-    <lastmod>2026-07-08T17:05:24.079Z</lastmod>
+    <lastmod>2026-07-08T18:36:31.558Z</lastmod>
   </url>
 </urlset>

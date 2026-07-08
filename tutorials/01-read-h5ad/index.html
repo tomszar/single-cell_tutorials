@@ -139,6 +139,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <a class="nav-link active" href="../../tutorials/01-read-h5ad/index.html" aria-current="page"> 
 <span class="menu-text">01: Read H5AD</span></a>
   </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../tutorials/02-preprocessing/index.html"> 
+<span class="menu-text">02: Preprocessing</span></a>
+  </li>  
 </ul>
           </div> <!-- /navcollapse -->
             <div class="quarto-navbar-tools">
@@ -227,18 +231,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li>Open the <code>PFC</code> folder, then <code>RNAseq</code>, then <code>donor_objects</code>.</li>
 <li>Find the filename containing <code>H20.33.001</code>.</li>
 <li>Download that <code>.h5ad</code> file.</li>
-<li>Move the downloaded file into this tutorial’s folder and rename it <code>donor_H20.33.001.h5ad</code>.</li>
+<li>In the repository root, create a <code>data/sea-ad/</code> folder if it does not exist, then move the downloaded file into it and rename it <code>donor_H20.33.001.h5ad</code>. The full path from the repository root should be <code>data/sea-ad/donor_H20.33.001.h5ad</code>.</li>
 </ol>
+<p>This is the shared data folder for the whole tutorial series. Later tutorials reuse the same file from here, so you only download it once. It is already git-ignored, so it will never be committed.</p>
 <p>Any donor works; <code>H20.33.001</code> is just a concrete choice. If you use a different donor, change the filename in the R code below. The other brain region, MTG (middle temporal gyrus), has the same layout under <code>MTG/RNAseq/donor_objects/</code>.</p>
 </section>
 <section id="step-3-load-it-into-r" class="level2">
 <h2 class="anchored" data-anchor-id="step-3-load-it-into-r">Step 3 — Load it into R</h2>
-<p>Open this tutorial’s folder as an RStudio project or set it as your working directory. In RStudio, select <strong>Session &gt; Set Working Directory &gt; To Source File Location</strong>. Then run the following code.</p>
+<p>Set R’s working directory to this tutorial’s folder. In RStudio, select <strong>Session &gt; Set Working Directory &gt; To Source File Location</strong>. The path below then reaches the shared <code>data/sea-ad/</code> folder from here (<code>../../</code> steps up out of <code>tutorials/01-read-h5ad/</code> to the repository root). Run the following code.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(schard)</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(SingleCellExperiment)</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>sce <span class="ot">&lt;-</span> schard<span class="sc">::</span><span class="fu">h5ad2sce</span>(<span class="st">"donor_H20.33.001.h5ad"</span>)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>sce <span class="ot">&lt;-</span> schard<span class="sc">::</span><span class="fu">h5ad2sce</span>(<span class="st">"../../data/sea-ad/donor_H20.33.001.h5ad"</span>)</span>
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>sce</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>This prints a summary of the object. A <code>SingleCellExperiment</code> holds three things you will reach for constantly:</p>
@@ -303,10 +308,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>Confirm that <code>donor_H20.33.001.h5ad</code> is in the same folder as this <code>.qmd</code> file and that R’s working directory is set to that folder. Check with:</p>
+<p>Confirm that the file is at <code>data/sea-ad/donor_H20.33.001.h5ad</code> under the repository root and that R’s working directory is this tutorial’s folder. Check with:</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">getwd</span>()</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">file.exists</span>(<span class="st">"donor_H20.33.001.h5ad"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">file.exists</span>(<span class="st">"../../data/sea-ad/donor_H20.33.001.h5ad"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
