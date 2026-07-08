@@ -56,11 +56,15 @@ fresh R session (not just visually inspect them).
 - `outputs/` — generated analysis outputs; gitignored except `.gitkeep`. Do not
   commit generated artifacts here.
 
-Tutorials are largely self-contained: each one instructs the reader to
-download its own data file(s) into its own tutorial directory (not into
-`data/`), and sets the R working directory to that file's location. There is
-no central data-loading module — each tutorial repeats the load step
-explicitly so it remains a standalone, runnable notebook.
+Downloaded SEA-AD data lives in the shared `data/` folder (e.g.
+`data/sea-ad/donor_H20.33.001.h5ad`), not in individual tutorial directories.
+This is the canonical home so a file downloaded once can be reused across
+tutorials (tutorials 01 and 02 both read the same donor file from there).
+Tutorials set the R working directory to their own folder ("Set Working
+Directory > To Source File Location" in RStudio) and reach the data with a
+relative path from there (`../../data/sea-ad/...`). There is still no central
+data-loading module — each tutorial repeats the load step explicitly so it
+remains a standalone, runnable notebook; only the file's location is shared.
 
 ## Writing and content rules
 

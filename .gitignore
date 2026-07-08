@@ -65,6 +65,9 @@ data/*
 !data/README.md
 !data/example/
 !data/example/.gitkeep
+!data/sea-ad/
+data/sea-ad/*
+!data/sea-ad/.gitkeep
 outputs/*
 !outputs/.gitkeep
 
