@@ -267,12 +267,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>cd <span class="ot">&lt;-</span> <span class="fu">colData</span>(sce)</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Cell-type labels in the SEA-AD taxonomy</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(cd<span class="sc">$</span>Subclass)     <span class="co"># broad types (e.g. Microglia-PVM, Astrocyte)</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(cd<span class="sc">$</span>Subclass)     <span class="co"># broad types (e.g. Astrocyte, Oligodendrocyte)</span></span>
 <span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(cd<span class="sc">$</span>Supertype)    <span class="co"># fine-grained types</span></span>
 <span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Sex and the categorical AD pathology score</span></span>
 <span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(cd<span class="sc">$</span>Sex)</span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(cd<span class="sc">$</span><span class="st">`</span><span class="at">Overall AD Neuropathological Change</span><span class="st">`</span>)</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(cd<span class="sc">$</span><span class="st">`</span><span class="at">Overall AD neuropathological Change</span><span class="st">`</span>)</span>
 <span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Continuous pathology axis: confirm its exact name, then inspect it</span></span>
 <span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="fu">grep</span>(</span>
@@ -284,7 +284,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <p>Two things to notice:</p>
 <ol type="1">
-<li>Column names with spaces need backticks, as with <code>Overall AD Neuropathological Change</code>.</li>
+<li>Column names with spaces need backticks, as with <code>Overall AD neuropathological Change</code>. Copy the capitalization exactly as <code>colnames(colData(sce))</code> prints it—here the “n” in “neuropathological” is lowercase.</li>
 <li>Because this is a single donor, <code>Sex</code> and the pathology score are the same for every cell. The differences you care about appear only when you compare donors, which is the next step in both tracks.</li>
 </ol>
 </section>
@@ -292,8 +292,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="anchored" data-anchor-id="step-5-subset-to-one-cell-type">Step 5 — Subset to one cell type</h2>
 <p>To see how subsetting works, keep just one cell type. Match the label exactly to what <code>table(cd$Subclass)</code> printed.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>micro <span class="ot">&lt;-</span> sce[, sce<span class="sc">$</span>Subclass <span class="sc">==</span> <span class="st">"Microglia-PVM"</span>]</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(micro)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>astro <span class="ot">&lt;-</span> sce[, sce<span class="sc">$</span>Subclass <span class="sc">==</span> <span class="st">"Astrocyte"</span>]</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(astro)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Microglia—the brain’s resident immune cells and a focus of Alzheimer’s research—are worth finding too. In this taxonomy they are not their own <code>Subclass</code>; they sit inside the broader <code>Immune</code> subclass, with <code>Supertype</code> labels beginning <code>Micro-PVM</code>. You can select them either way:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>immune <span class="ot">&lt;-</span> sce[, sce<span class="sc">$</span>Subclass <span class="sc">==</span> <span class="st">"Immune"</span>]                 <span class="co"># whole immune compartment</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>micro  <span class="ot">&lt;-</span> sce[, <span class="fu">grepl</span>(<span class="st">"^Micro-PVM"</span>, sce<span class="sc">$</span>Supertype)]       <span class="co"># microglia specifically</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(immune)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(micro)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 <section id="if-something-breaks" class="level2">
@@ -310,8 +317,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="callout-body-container callout-body">
 <p>Confirm that the file is at <code>data/sea-ad/donor_H20.33.001.h5ad</code> under the repository root and that R’s working directory is this tutorial’s folder. Check with:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">getwd</span>()</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">file.exists</span>(<span class="st">"../../data/sea-ad/donor_H20.33.001.h5ad"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">getwd</span>()</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">file.exists</span>(<span class="st">"../../data/sea-ad/donor_H20.33.001.h5ad"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </div>
 </div>
