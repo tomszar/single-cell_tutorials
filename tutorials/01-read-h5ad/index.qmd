@@ -117,12 +117,12 @@ label, the donor's sex, and the pathology measure.
 cd <- colData(sce)
 
 # Cell-type labels in the SEA-AD taxonomy
-table(cd$Subclass)     # broad types (e.g. Microglia-PVM, Astrocyte)
+table(cd$Subclass)     # broad types (e.g. Astrocyte, Oligodendrocyte)
 table(cd$Supertype)    # fine-grained types
 
 # Sex and the categorical AD pathology score
 table(cd$Sex)
-table(cd$`Overall AD Neuropathological Change`)
+table(cd$`Overall AD neuropathological Change`)
 
 # Continuous pathology axis: confirm its exact name, then inspect it
 grep(
@@ -136,7 +136,9 @@ grep(
 Two things to notice:
 
 1. Column names with spaces need backticks, as with
-   `Overall AD Neuropathological Change`.
+   `Overall AD neuropathological Change`. Copy the capitalization exactly as
+   `colnames(colData(sce))` prints it—here the "n" in "neuropathological" is
+   lowercase.
 2. Because this is a single donor, `Sex` and the pathology score are the same
    for every cell. The differences you care about appear only when you compare
    donors, which is the next step in both tracks.
@@ -147,7 +149,19 @@ To see how subsetting works, keep just one cell type. Match the label exactly
 to what `table(cd$Subclass)` printed.
 
 ```{r}
-micro <- sce[, sce$Subclass == "Microglia-PVM"]
+astro <- sce[, sce$Subclass == "Astrocyte"]
+dim(astro)
+```
+
+Microglia—the brain's resident immune cells and a focus of Alzheimer's
+research—are worth finding too. In this taxonomy they are not their own
+`Subclass`; they sit inside the broader `Immune` subclass, with `Supertype`
+labels beginning `Micro-PVM`. You can select them either way:
+
+```{r}
+immune <- sce[, sce$Subclass == "Immune"]                 # whole immune compartment
+micro  <- sce[, grepl("^Micro-PVM", sce$Supertype)]       # microglia specifically
+dim(immune)
 dim(micro)
 ```
 
