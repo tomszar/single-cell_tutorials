@@ -16,16 +16,16 @@ runtimes practical for a class.
 |---|----------|--------|
 | 00 | Setup — install R, RStudio, Quarto, Git; run a notebook | Done |
 | 01 | Read H5AD — load one donor into a `SingleCellExperiment`, locate metadata | Done |
-| 02 | Preprocessing — QC, normalization, feature selection, dimensionality reduction | Planned (next) |
+| 02 | Preprocessing — QC, normalization, feature selection, dimensionality reduction | Done |
 | 03a | Pseudobulk track | Planned |
 | 03b | Trajectory track | Planned |
 
 Tutorials 00 and 01 both load data and orient the reader in the SCE. The two
 analysis tracks named at the end of tutorial 01 (pseudobulk, trajectory) both
-assume a clean, normalized object — which nothing currently produces. Tutorial
-02 fills that gap and is a shared prerequisite for both tracks.
+assume a clean, normalized object. Tutorial 02 produces it and is the shared
+prerequisite for both tracks.
 
-## 02 — Preprocessing (next)
+## 02 — Preprocessing
 
 Take the raw single-donor `SingleCellExperiment` from tutorial 01 and turn it
 into a QC'd, normalized object with reduced dimensions, ready for downstream

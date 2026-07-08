@@ -11,6 +11,8 @@ website:
         text: "00: Setup"
       - href: tutorials/01-read-h5ad/index.qmd
         text: "01: Read H5AD"
+      - href: tutorials/02-preprocessing/index.qmd
+        text: "02: Preprocessing"
 
 format:
   html:

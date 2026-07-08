@@ -9,3 +9,4 @@ data.
 
 - [Tutorial 00: Setup](tutorials/00-setup/index.qmd)
 - [Tutorial 01: Read an H5AD file](tutorials/01-read-h5ad/index.qmd)
+- [Tutorial 02: Preprocessing](tutorials/02-preprocessing/index.qmd)

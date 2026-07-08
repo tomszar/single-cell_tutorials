@@ -39,6 +39,12 @@
           SingleCellExperiment
           Matrix
           schard
+          # Tutorial 02 preprocessing: QC, normalization, feature selection,
+          # and PCA/UMAP (uwot backs runUMAP).
+          scuttle
+          scran
+          scater
+          uwot
         ];
 
         rEnv = pkgs.rWrapper.override { packages = rPkgs; };

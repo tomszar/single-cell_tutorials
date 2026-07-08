@@ -1,0 +1,450 @@
+---
+title: "Preprocessing single-cell data"
+subtitle: "QC, normalization, feature selection, and dimensionality reduction on one donor"
+author:
+  - name: "IPRE Winter 2026 · MOTCO · research line IPI-26-1206"
+format:
+  html:
+    toc: true
+    code-copy: true
+execute:
+  eval: false
+---
+
+In [tutorial 01](../01-read-h5ad/index.qmd) you loaded one SEA-AD donor into a
+`SingleCellExperiment` and found where the cell-type labels, sex, and pathology
+score live. Quality control and normalization both start from **raw counts**: the number of
+times each gene was detected in each nucleus, straight from the sequencer. Raw
+counts are not yet something you can compare cell to cell, because they are
+dominated by technical noise—some droplets captured more RNA than others, some
+are empty or damaged, and a handful of highly expressed genes drown out the
+rest. SEA-AD's files actually ship *two* versions of the matrix: a convenience
+copy that is already normalized, and the raw counts stored alongside it. Step 2
+shows how to tell them apart and grab the raw one.
+
+Preprocessing is the step that turns raw counts into an object you can actually
+analyze. By the end you will have thrown out low-quality nuclei, put the
+remaining cells on a common scale, picked the genes that carry biological
+signal, and compressed the data down to a two-dimensional map you can look at.
+Both project tracks—pseudobulk and trajectory—start from this object, so this
+tutorial is the shared foundation for everything that follows.
+
+We stay on the single donor from tutorial 01 (`H20.33.001`) so the whole thing
+runs in a class session.
+
+## Learning objectives
+
+By the end of this tutorial you should be able to:
+
+- Explain **why** single-cell counts need quality control and normalization
+  before any downstream analysis.
+- Compute per-cell QC metrics (library size, genes detected, % mitochondrial
+  reads) and interpret their distributions.
+- Filter low-quality cells with thresholds you can *defend*, and explain the
+  difference between fixed and adaptive (MAD-based) cutoffs.
+- Normalize counts—both the quick log-normalization and the more principled
+  `scran` pooling approach—and say what each one corrects for.
+- Select highly variable genes and explain why we don't just use all of them.
+- Reduce dimensionality with PCA and then UMAP, set a seed, and read the
+  resulting embedding.
+
+**Prerequisites:** tutorials 00 and 01, and the donor `.h5ad` file already
+downloaded to `data/sea-ad/donor_H20.33.001.h5ad` under the repository root.
+This tutorial reuses that same file.
+
+**Expected outcome:** a filtered, normalized `SingleCellExperiment` carrying a
+`logcounts` assay, a stored set of highly variable genes, and `PCA` and `UMAP`
+entries in `reducedDims()`—ready for either analysis track.
+
+## Step 1 — Install the R packages
+
+You already have `schard` and `SingleCellExperiment` from tutorial 01. The new
+tools all come from Bioconductor and belong to the [`scran`/`scater`
+ecosystem](https://bioconductor.org/books/release/OSCA/) built specifically for
+single-cell work:
+
+- **`scuttle`** — QC metrics and normalization helpers.
+- **`scran`** — pooling-based size factors and variance modeling for feature
+  selection.
+- **`scater`** — PCA/UMAP wrappers and plotting.
+
+```{r}
+if (!requireNamespace("BiocManager", quietly = TRUE)) {
+  install.packages("BiocManager")
+}
+BiocManager::install(c("scuttle", "scran", "scater", "uwot"))
+```
+
+`uwot` is the package that actually computes the UMAP; `scater` calls it for
+us. If you are on the Nix dev shell, all of these are already built—you do not
+need to run `install.packages`.
+
+::: {.callout-note title="Expect deprecation warnings"}
+This tutorial uses the `scran`/`scater`/`scuttle` functions taught in the
+[OSCA book](https://bioconductor.org/books/release/OSCA/)—the standard learning
+path for single-cell analysis in R. On very recent Bioconductor releases some of
+these functions print a deprecation notice pointing to the newer `scrapper`
+package. They still work exactly as described here, and the warnings are safe to
+ignore for this tutorial; we stay on the well-documented ecosystem so you can
+look up every step.
+:::
+
+## Step 2 — Reload the donor object and get the raw counts
+
+Set R's working directory to this tutorial's folder (**Session > Set Working
+Directory > To Source File Location** in RStudio) and load the donor file from
+the shared `data/sea-ad/` folder.
+
+```{r}
+library(schard)
+library(SingleCellExperiment)
+
+h5 <- "../../data/sea-ad/donor_H20.33.001.h5ad"
+sce <- schard::h5ad2sce(h5)
+sce
+```
+
+`schard` loads the file's main matrix, `X`. For SEA-AD that matrix is **not raw
+counts**—it is a log-normalized copy the authors precomputed for convenience.
+You can see this: the values are fractional and small, not the whole numbers a
+count matrix would have.
+
+```{r}
+assayNames(sce)                 # "X"
+range(assay(sce, "X"))          # small, non-integer values (max ~8)
+```
+
+QC filtering and size-factor normalization both need the *raw* counts, so we
+fetch them. SEA-AD stores them in a separate layer called `UMIs`, which
+`schard::h5ad2Matrix` can read directly. It comes back without row and column
+names, so we copy them from the object, then store it as the `counts` assay.
+
+```{r}
+counts_mat <- schard::h5ad2Matrix(h5, "layers/UMIs")
+dimnames(counts_mat) <- dimnames(sce)
+counts(sce) <- counts_mat
+
+# We won't reuse SEA-AD's precomputed normalization; drop it to avoid confusion.
+assay(sce, "X") <- NULL
+
+# The counts should now be non-negative whole numbers.
+counts(sce)[1:5, 1:5]
+```
+
+::: {.callout-note title="Why not just use the normalized `X`?"}
+The point of this tutorial is to do QC and normalization yourself, with choices
+you can see and defend—starting from someone else's normalized matrix would skip
+exactly the steps you are here to learn. You also *can't* do count-based QC
+(library size, mitochondrial fraction) on values that are no longer counts.
+Different datasets hide their raw counts in different places (a `layers/` entry,
+an `.h5ad` `raw` slot, a separate file); always check before assuming the matrix
+you loaded is raw.
+:::
+
+## Step 3 — Compute per-cell QC metrics
+
+A "cell" in this data is really one droplet's worth of RNA, and not every
+droplet is a healthy cell. Three numbers tell you most of what you need:
+
+- **Library size** (`sum`): total counts in the cell. Very low means an empty
+  or barely captured droplet; extremely high can signal a doublet (two cells in
+  one droplet).
+- **Genes detected** (`detected`): how many distinct genes had at least one
+  count. Low complexity is another empty-droplet signature.
+- **Mitochondrial fraction** (`subsets_Mito_percent`): the share of counts from
+  mitochondrial genes. When a cell's membrane ruptures, cytoplasmic RNA leaks
+  out but mitochondrial RNA stays trapped, so a high mito fraction flags dying
+  or damaged cells.
+
+To compute the mito fraction we first need to know which rows are
+mitochondrial genes. Real datasets don't flag them for you, so look at what the
+row names and per-gene metadata actually contain before matching.
+
+```{r}
+head(rownames(sce))          # gene symbols in these files
+colnames(rowData(sce))       # per-gene metadata columns
+head(rowData(sce))
+```
+
+In the SEA-AD donor files the row names are **gene symbols** (the Ensembl IDs
+live in `rowData(sce)$gene_ids`). Mitochondrial genes are the ones whose symbol
+starts with `MT-`, such as `MT-ND1`, so we can match on the row names directly.
+If you meet a dataset whose row names are Ensembl IDs instead, match on whichever
+`rowData` column holds the symbols.
+
+```{r}
+library(scuttle)
+
+is_mito <- grepl("^MT-", rownames(sce))
+sum(is_mito)                 # 13 — the mitochondrial protein-coding genes
+```
+
+::: {.callout-tip title="Sanity check"}
+If `sum(is_mito)` is `0`, you matched the wrong identifiers—the symbols are
+somewhere other than where you looked. If it is in the hundreds, you probably
+matched Ensembl IDs by accident. The human mitochondrial genome encodes 13
+protein-coding genes, so a count of 13 is what you want here.
+:::
+
+Now compute the metrics and attach them to `colData(sce)`.
+
+```{r}
+sce <- addPerCellQCMetrics(sce, subsets = list(Mito = is_mito))
+
+# The new per-cell columns:
+colnames(colData(sce))
+summary(sce$sum)
+summary(sce$detected)
+summary(sce$subsets_Mito_percent)
+```
+
+## Step 4 — Filter low-quality cells
+
+Look at the distributions before you cut anything. Thresholds you can't see the
+reason for are thresholds you can't defend.
+
+```{r}
+library(scater)
+
+plotColData(sce, y = "sum") + ggplot2::scale_y_log10() +
+  ggplot2::ggtitle("Library size")
+plotColData(sce, y = "detected") + ggplot2::scale_y_log10() +
+  ggplot2::ggtitle("Genes detected")
+plotColData(sce, y = "subsets_Mito_percent") +
+  ggplot2::ggtitle("Mitochondrial %")
+```
+
+### Fixed vs. adaptive thresholds
+
+There are two ways to pick cutoffs:
+
+- **Fixed thresholds** — e.g. "drop cells with fewer than 500 genes or more
+  than 10% mito reads." Simple and transparent, but the right number depends on
+  the tissue, the protocol, and sequencing depth. A cutoff that is sensible for
+  blood may throw away perfectly good neurons.
+- **Adaptive thresholds** — flag cells that are outliers *relative to this
+  dataset*. The standard approach uses the **median absolute deviation (MAD)**:
+  a cell is an outlier if it sits more than a few MADs from the median. This
+  adapts to whatever the data's own scale is, which is why it is the OSCA
+  book's default.
+
+We'll use the adaptive approach with `perCellQCFilters`, which flags cells that
+are outliers on *low* library size, *low* genes detected, or *high* mito
+fraction—the three directions that indicate poor quality.
+
+```{r}
+qc <- perCellQCFilters(
+  sce,
+  sub.fields = "subsets_Mito_percent"
+)
+
+# How many cells each rule flags, and the total discarded:
+colSums(as.matrix(qc))
+```
+
+`perCellQCFilters` works on the log scale for size and complexity (counts are
+right-skewed) and flags high-mito cells in the upper tail. Attach its verdict,
+inspect it, then subset.
+
+```{r}
+sce$discard <- qc$discard
+
+# Compare discarded vs. kept cells to confirm we're cutting the bad tail, not
+# a biologically interesting population.
+plotColData(sce, x = "sum", y = "subsets_Mito_percent", colour_by = "discard") +
+  ggplot2::scale_x_log10()
+
+# Keep only the cells that passed.
+sce <- sce[, !sce$discard]
+dim(sce)
+```
+
+::: {.callout-note title="Optional: try fixed thresholds"}
+As an exercise, define your own fixed cutoffs and compare. Do they keep the
+same cells the adaptive rule kept?
+
+```{r}
+manual_discard <- sce$sum < 500 |
+  sce$detected < 300 |
+  sce$subsets_Mito_percent > 10
+table(manual_discard)
+```
+:::
+
+## Step 5 — Normalize
+
+Two cells with the same biological state can still have very different total
+counts purely because one was sequenced more deeply. Normalization removes that
+technical difference so expression is comparable across cells. We then take the
+log, which stabilizes variance and makes the highly expressed genes stop
+dominating.
+
+### The quick way: library-size normalization
+
+The simplest correction divides each cell's counts by its library size (its
+size factor) and log-transforms. `logNormCounts` does both and stores the
+result in a new `logcounts` assay.
+
+```{r}
+sce <- logNormCounts(sce)
+assayNames(sce)              # now includes "logcounts"
+```
+
+### The principled way: `scran` pooling
+
+Library-size normalization assumes most genes are not differentially expressed
+between cells, which breaks down when cells are very different from one another.
+`scran` handles this by pooling many cells together to estimate size factors
+stably, then deconvolving them back to per-cell factors. It first groups
+roughly similar cells with `quickCluster` so the pooling stays within
+comparable cells.
+
+```{r}
+library(scran)
+
+set.seed(100)                # quickCluster uses randomness
+clusters <- quickCluster(sce)
+sce <- computeSumFactors(sce, clusters = clusters)
+
+summary(sizeFactors(sce))    # should be positive, centered near 1
+
+# Recompute logcounts using these better size factors.
+sce <- logNormCounts(sce)
+```
+
+For a single, relatively homogeneous donor the two approaches give similar
+results, but the pooling method is the one to reach for as datasets get more
+heterogeneous. We keep its `logcounts` for the rest of the tutorial.
+
+## Step 6 — Select highly variable genes
+
+Most of the ~36,000 genes are either off or uniformly expressed and carry no
+information about how cells differ. Feeding all of them into PCA just adds
+noise. **Highly variable genes (HVGs)** are the genes whose variance across
+cells exceeds what we'd expect from technical noise alone—those are where the
+biological signal is.
+
+`modelGeneVar` decomposes each gene's variance into a technical trend (variance
+expected at that expression level) and the biological excess above it.
+`getTopHVGs` then ranks genes by that biological component.
+
+```{r}
+dec <- modelGeneVar(sce)
+
+# Visualize the mean-variance trend: the curve is the technical expectation,
+# points well above it are the interesting genes.
+plot(dec$mean, dec$total,
+     xlab = "Mean log-expression", ylab = "Variance",
+     main = "Mean-variance trend")
+curve(metadata(dec)$trend(x), col = "blue", add = TRUE)
+
+# Take the top 2000 genes by biological variance.
+hvg <- getTopHVGs(dec, n = 2000)
+length(hvg)
+head(hvg)
+```
+
+2000 is a common default; more genes retain finer signal at the cost of more
+noise. This is a knob worth trying both ways once the pipeline works.
+
+## Step 7 — Reduce dimensionality
+
+Even restricted to 2000 genes, the data lives in 2000-dimensional space. Two
+reductions get us to something interpretable:
+
+1. **PCA** finds the directions of greatest variation. The first few dozen
+   principal components capture the dominant structure while filtering noise;
+   downstream steps run on these instead of raw genes.
+2. **UMAP** takes those PCs and lays them out in 2D for visualization. UMAP is
+   for *looking*, not for quantitative claims—distances between far-apart
+   clusters are not meaningful.
+
+Both are randomized, so set a seed before each for reproducibility.
+
+```{r}
+set.seed(1234)
+sce <- runPCA(sce, subset_row = hvg, ncomponents = 50)
+
+# How much variance each PC explains—look for where the curve flattens.
+pct_var <- attr(reducedDim(sce, "PCA"), "percentVar")
+plot(pct_var, xlab = "PC", ylab = "% variance explained", type = "b")
+```
+
+```{r}
+set.seed(1234)
+sce <- runUMAP(sce, dimred = "PCA")
+
+reducedDimNames(sce)         # "PCA" and "UMAP"
+```
+
+Now look at the embedding, colored by the cell-type labels from tutorial 01. If
+preprocessing worked, cells of the same `Subclass` should land together.
+
+```{r}
+plotReducedDim(sce, "UMAP", colour_by = "Subclass")
+```
+
+::: {.callout-tip title="Read the map critically"}
+Distinct, well-separated islands that match known cell types are a good sign.
+If everything is one blob, or if the clusters line up with library size instead
+of biology, revisit your QC and normalization—those are the usual culprits. Try
+coloring by `sum` or `subsets_Mito_percent` to check that technical variation
+isn't driving the layout.
+:::
+
+## Step 8 — Save the preprocessed object
+
+Both tracks start here, so save the result. The repo keeps generated analysis
+outputs in the top-level `outputs/` folder, which `.gitignore` already excludes
+from version control—so the object won't get committed by accident.
+
+```{r}
+saveRDS(sce, "../../outputs/sce_preprocessed.rds")
+```
+
+The two analysis tracks reload it with
+`readRDS("../../outputs/sce_preprocessed.rds")`.
+
+## What you produced
+
+Your `sce` now carries everything the downstream tracks need:
+
+- a `logcounts` assay from `scran` pooling normalization,
+- QC metrics in `colData(sce)` and the low-quality cells removed,
+- a 2000-gene HVG set in `hvg`, and
+- `PCA` and `UMAP` in `reducedDims(sce)`.
+
+## Where this goes next
+
+With a clean, normalized object in hand, the project tracks diverge:
+
+- **Pseudobulk track:** repeat loading across donors, aggregate counts per
+  donor × cell type, and run a donor-level differential expression comparison
+  across AD pathology.
+- **Trajectory track:** subset one cell type, reuse the PCA/UMAP you just
+  computed, and fit a `slingshot` trajectory anchored in low-pathology cells.
+
+## If something breaks
+
+::: {.callout-warning title="`h5ad2Matrix` can't find `layers/UMIs`"}
+The layer name is dataset-specific. List what the file contains with
+`rhdf5::h5ls("../../data/sea-ad/donor_H20.33.001.h5ad")` and look under
+`/layers` for the raw-count matrix, then pass that path to `h5ad2Matrix`.
+:::
+
+::: {.callout-warning title="`sum(is_mito)` is 0"}
+The row names aren't the gene symbols you expected. Print `head(rownames(sce))`
+and `head(rowData(sce))`, find where symbols like `MT-ND1` live, and grep on
+that instead.
+:::
+
+::: {.callout-warning title="`runUMAP` cannot find uwot"}
+Install it with `BiocManager::install("uwot")` (or `install.packages("uwot")`),
+then rerun Step 7.
+:::
+
+::: {.callout-warning title="Almost every cell is discarded in QC"}
+Adaptive thresholds assume most cells are good. If the donor file was already
+QC'd upstream, the MAD rule can over-flag. Inspect the distributions in Step 4
+and, if needed, switch to explicit fixed thresholds you can justify.
+:::
