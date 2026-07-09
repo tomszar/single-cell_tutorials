@@ -144,6 +144,19 @@ Two things to notice:
    for every cell. The differences you care about appear only when you compare
    donors, which is the next step in both tracks.
 
+::: {.callout-important title="Your deliverable: a variable dictionary"}
+As you explore, keep a running **variable dictionary**—your own notes on the
+`colData` columns: what each one means, whether it is categorical or continuous,
+and whether it describes a single *cell* or the whole *donor*. This is your
+artifact, not a graded worksheet, and you will lean on it constantly: the
+grouping variables, confounders, and contrasts you choose in later tutorials all
+come from here. Start it now with the columns above—`Subclass`, `Supertype`,
+`Sex`, `Overall AD neuropathological Change`, and the continuous pathology
+score—and add to it whenever you meet a new column. Nobody hands you the "right"
+set of variables; deciding which ones matter for your question is the first piece
+of the analysis that is genuinely yours.
+:::
+
 ## Step 5 — Subset to one cell type
 
 To see how subsetting works, keep just one cell type. Match the label exactly
@@ -198,7 +211,23 @@ spaces and capitalization.
 ## Where this goes next
 
 You now have a `SingleCellExperiment` for one donor and know where sex,
-pathology, and cell type live in it. From here, the project tracks diverge:
+pathology, and cell type live in it.
+
+Before you move on, spend a few minutes exploring on your own—this is where the
+analysis choices you'll make later begin:
+
+- Browse the full metadata with `colnames(colData(sce))` and a few `table()` or
+  `summary()` calls. Which variables would you use to compare *cells* within this
+  donor? Which only make sense when comparing *donors*?
+- Which columns look like they could be **confounders**—things that might track
+  with pathology but aren't pathology itself (sex, age, post-mortem interval, RNA
+  quality)? Note them in your variable dictionary; you'll decide what to *do*
+  about them when you run a real comparison.
+
+There isn't one right answer here—the point is to start reasoning about this as
+*your* dataset rather than a fixed recipe.
+
+From here, the project tracks diverge:
 
 - **Pseudobulk analysis:** repeat this loading process over donors, then
   perform per-donor pseudobulk aggregation.

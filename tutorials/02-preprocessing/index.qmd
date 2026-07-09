@@ -228,9 +228,11 @@ There are two ways to pick cutoffs:
   adapts to whatever the data's own scale is, which is why it is the OSCA
   book's default.
 
-We'll use the adaptive approach with `perCellQCFilters`, which flags cells that
-are outliers on *low* library size, *low* genes detected, or *high* mito
-fraction—the three directions that indicate poor quality.
+We'll *start* with the adaptive approach via `perCellQCFilters`, which flags
+cells that are outliers on *low* library size, *low* genes detected, or *high*
+mito fraction—the three directions that indicate poor quality. It works on the
+log scale for size and complexity (counts are right-skewed) and flags high-mito
+cells in the upper tail.
 
 ```{r}
 qc <- perCellQCFilters(
@@ -240,36 +242,44 @@ qc <- perCellQCFilters(
 
 # How many cells each rule flags, and the total discarded:
 colSums(as.matrix(qc))
-```
-
-`perCellQCFilters` works on the log scale for size and complexity (counts are
-right-skewed) and flags high-mito cells in the upper tail. Attach its verdict,
-inspect it, then subset.
-
-```{r}
 sce$discard <- qc$discard
 
-# Compare discarded vs. kept cells to confirm we're cutting the bad tail, not
-# a biologically interesting population.
+# Confirm we're cutting the bad tail, not a biologically interesting population.
 plotColData(sce, x = "sum", y = "subsets_Mito_percent", colour_by = "discard") +
   ggplot2::scale_x_log10()
+```
 
-# Keep only the cells that passed.
+### Your decision: which cells to cut
+
+The adaptive rule is a *starting point*, not the answer. Before you accept it,
+set a fixed rule of your own and see where the two disagree. Pick cutoffs you can
+say out loud—"fewer than 500 counts, fewer than 300 genes, or more than 10%
+mitochondrial"—and compare them against the adaptive verdict on the *same,
+still-unfiltered* cells:
+
+```{r}
+# Your fixed rule—change these numbers and re-run.
+fixed_discard <- sce$sum < 500 |
+  sce$detected < 300 |
+  sce$subsets_Mito_percent > 10
+
+# Where do the two rules agree, and where do they disagree?
+table(adaptive = sce$discard, fixed = fixed_discard)
+```
+
+Look at the off-diagonal counts—the cells only *one* rule drops—and ask why. A
+cell the adaptive rule keeps but your fixed rule cuts might be a genuinely small
+but healthy cell type; a cell your fixed rule keeps but the adaptive rule cuts
+might be a high-mito straggler. There is no universally correct cutoff—the right
+one depends on this tissue, protocol, and sequencing depth—so your job is to
+choose a rule you can *defend*, not to match an answer key.
+
+```{r}
+# Apply your choice. We default to the adaptive rule so the tutorial proceeds;
+# swap in `fixed_discard` if that is the call you would defend.
 sce <- sce[, !sce$discard]
 dim(sce)
 ```
-
-::: {.callout-note title="Optional: try fixed thresholds"}
-As an exercise, define your own fixed cutoffs and compare. Do they keep the
-same cells the adaptive rule kept?
-
-```{r}
-manual_discard <- sce$sum < 500 |
-  sce$detected < 300 |
-  sce$subsets_Mito_percent > 10
-table(manual_discard)
-```
-:::
 
 ## Step 5 — Normalize
 
@@ -344,8 +354,24 @@ length(hvg)
 head(hvg)
 ```
 
-2000 is a common default; more genes retain finer signal at the cost of more
-noise. This is a knob worth trying both ways once the pipeline works.
+2000 is a common default, not a magic number.
+
+::: {.callout-tip title="Your decision: how many genes?"}
+Once the pipeline runs end to end, come back and treat this cutoff as a choice.
+See how much the gene set changes with it, then re-run the dimensionality
+reduction in Step 7 with a smaller and a larger set:
+
+```{r}
+hvg_1000 <- getTopHVGs(dec, n = 1000)
+hvg_5000 <- getTopHVGs(dec, n = 5000)
+```
+
+Swap `hvg_1000` or `hvg_5000` into `runPCA(..., subset_row = ...)` and look at
+the UMAP: too few genes and you drop real structure, so distinct cell types start
+to merge; too many and technical noise creeps back in and blurs the clusters.
+Which cutoff gives the cleanest separation of the `Subclass` labels for *this*
+donor? Note your choice and your reasoning—there isn't a single right value.
+:::
 
 ## Step 7 — Reduce dimensionality
 
@@ -370,12 +396,24 @@ pct_var <- attr(reducedDim(sce, "PCA"), "percentVar")
 plot(pct_var, xlab = "PC", ylab = "% variance explained", type = "b")
 ```
 
+### Your decision: how many PCs to keep
+
+The scree plot is there for a real choice, not decoration. Downstream steps don't
+need all 50 PCs—only the ones carrying structure, before the curve flattens into
+noise. Read the elbow off the plot above and keep that many:
+
 ```{r}
+n_pcs <- 20   # your call—read it from the elbow in the scree plot
+
 set.seed(1234)
-sce <- runUMAP(sce, dimred = "PCA")
+sce <- runUMAP(sce, dimred = "PCA", n_dimred = seq_len(n_pcs))
 
 reducedDimNames(sce)         # "PCA" and "UMAP"
 ```
+
+Keep too few PCs and you throw away real structure; keep too many and you feed
+noise into the layout. Try a couple of values for `n_pcs` and watch whether the
+`Subclass` clusters sharpen or blur.
 
 Now look at the embedding, colored by the cell-type labels from tutorial 01. If
 preprocessing worked, cells of the same `Subclass` should land together.
@@ -413,6 +451,16 @@ Your `sce` now carries everything the downstream tracks need:
 - QC metrics in `colData(sce)` and the low-quality cells removed,
 - a 2000-gene HVG set in `hvg`, and
 - `PCA` and `UMAP` in `reducedDims(sce)`.
+
+::: {.callout-important title="Your choices are part of the result"}
+You made real decisions in this tutorial—which cells to cut, how many genes to
+keep, how many PCs to trust. None had a single correct answer, and a classmate
+who chose differently will end up with a slightly different object. That is
+normal in single-cell analysis, not a mistake to hide. Before moving on, look
+back over your QC, HVG, and PCA choices and ask: **which of these could you
+defend to a skeptical reviewer, and which were just the default I left in?** The
+ones you can't yet defend are the ones worth revisiting.
+:::
 
 ## Where this goes next
 
