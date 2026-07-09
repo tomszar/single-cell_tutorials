@@ -170,6 +170,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#step-4-filter-low-quality-cells" id="toc-step-4-filter-low-quality-cells" class="nav-link" data-scroll-target="#step-4-filter-low-quality-cells">Step 4 — Filter low-quality cells</a>
   <ul class="collapse">
   <li><a href="#fixed-vs.-adaptive-thresholds" id="toc-fixed-vs.-adaptive-thresholds" class="nav-link" data-scroll-target="#fixed-vs.-adaptive-thresholds">Fixed vs.&nbsp;adaptive thresholds</a></li>
+  <li><a href="#your-decision-which-cells-to-cut" id="toc-your-decision-which-cells-to-cut" class="nav-link" data-scroll-target="#your-decision-which-cells-to-cut">Your decision: which cells to cut</a></li>
   </ul></li>
   <li><a href="#step-5-normalize" id="toc-step-5-normalize" class="nav-link" data-scroll-target="#step-5-normalize">Step 5 — Normalize</a>
   <ul class="collapse">
@@ -177,7 +178,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#the-principled-way-scran-pooling" id="toc-the-principled-way-scran-pooling" class="nav-link" data-scroll-target="#the-principled-way-scran-pooling">The principled way: <code>scran</code> pooling</a></li>
   </ul></li>
   <li><a href="#step-6-select-highly-variable-genes" id="toc-step-6-select-highly-variable-genes" class="nav-link" data-scroll-target="#step-6-select-highly-variable-genes">Step 6 — Select highly variable genes</a></li>
-  <li><a href="#step-7-reduce-dimensionality" id="toc-step-7-reduce-dimensionality" class="nav-link" data-scroll-target="#step-7-reduce-dimensionality">Step 7 — Reduce dimensionality</a></li>
+  <li><a href="#step-7-reduce-dimensionality" id="toc-step-7-reduce-dimensionality" class="nav-link" data-scroll-target="#step-7-reduce-dimensionality">Step 7 — Reduce dimensionality</a>
+  <ul class="collapse">
+  <li><a href="#your-decision-how-many-pcs-to-keep" id="toc-your-decision-how-many-pcs-to-keep" class="nav-link" data-scroll-target="#your-decision-how-many-pcs-to-keep">Your decision: how many PCs to keep</a></li>
+  </ul></li>
   <li><a href="#step-8-save-the-preprocessed-object" id="toc-step-8-save-the-preprocessed-object" class="nav-link" data-scroll-target="#step-8-save-the-preprocessed-object">Step 8 — Save the preprocessed object</a></li>
   <li><a href="#what-you-produced" id="toc-what-you-produced" class="nav-link" data-scroll-target="#what-you-produced">What you produced</a></li>
   <li><a href="#where-this-goes-next" id="toc-where-this-goes-next" class="nav-link" data-scroll-target="#where-this-goes-next">Where this goes next</a></li>
@@ -367,7 +371,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><strong>Fixed thresholds</strong> — e.g.&nbsp;“drop cells with fewer than 500 genes or more than 10% mito reads.” Simple and transparent, but the right number depends on the tissue, the protocol, and sequencing depth. A cutoff that is sensible for blood may throw away perfectly good neurons.</li>
 <li><strong>Adaptive thresholds</strong> — flag cells that are outliers <em>relative to this dataset</em>. The standard approach uses the <strong>median absolute deviation (MAD)</strong>: a cell is an outlier if it sits more than a few MADs from the median. This adapts to whatever the data’s own scale is, which is why it is the OSCA book’s default.</li>
 </ul>
-<p>We’ll use the adaptive approach with <code>perCellQCFilters</code>, which flags cells that are outliers on <em>low</em> library size, <em>low</em> genes detected, or <em>high</em> mito fraction—the three directions that indicate poor quality.</p>
+<p>We’ll <em>start</em> with the adaptive approach via <code>perCellQCFilters</code>, which flags cells that are outliers on <em>low</em> library size, <em>low</em> genes detected, or <em>high</em> mito fraction—the three directions that indicate poor quality. It works on the log scale for size and complexity (counts are right-skewed) and flags high-mito cells in the upper tail.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>qc <span class="ot">&lt;-</span> <span class="fu">perCellQCFilters</span>(</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  sce,</span>
@@ -375,39 +379,32 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>)</span>
 <span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="co"># How many cells each rule flags, and the total discarded:</span></span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="fu">colSums</span>(<span class="fu">as.matrix</span>(qc))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="fu">colSums</span>(<span class="fu">as.matrix</span>(qc))</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>sce<span class="sc">$</span>discard <span class="ot">&lt;-</span> qc<span class="sc">$</span>discard</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Confirm we're cutting the bad tail, not a biologically interesting population.</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="fu">plotColData</span>(sce, <span class="at">x =</span> <span class="st">"sum"</span>, <span class="at">y =</span> <span class="st">"subsets_Mito_percent"</span>, <span class="at">colour_by =</span> <span class="st">"discard"</span>) <span class="sc">+</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">scale_x_log10</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p><code>perCellQCFilters</code> works on the log scale for size and complexity (counts are right-skewed) and flags high-mito cells in the upper tail. Attach its verdict, inspect it, then subset.</p>
+</section>
+<section id="your-decision-which-cells-to-cut" class="level3">
+<h3 class="anchored" data-anchor-id="your-decision-which-cells-to-cut">Your decision: which cells to cut</h3>
+<p>The adaptive rule is a <em>starting point</em>, not the answer. Before you accept it, set a fixed rule of your own and see where the two disagree. Pick cutoffs you can say out loud—“fewer than 500 counts, fewer than 300 genes, or more than 10% mitochondrial”—and compare them against the adaptive verdict on the <em>same, still-unfiltered</em> cells:</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>sce<span class="sc">$</span>discard <span class="ot">&lt;-</span> qc<span class="sc">$</span>discard</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Compare discarded vs. kept cells to confirm we're cutting the bad tail, not</span></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co"># a biologically interesting population.</span></span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="fu">plotColData</span>(sce, <span class="at">x =</span> <span class="st">"sum"</span>, <span class="at">y =</span> <span class="st">"subsets_Mito_percent"</span>, <span class="at">colour_by =</span> <span class="st">"discard"</span>) <span class="sc">+</span></span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  ggplot2<span class="sc">::</span><span class="fu">scale_x_log10</span>()</span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Keep only the cells that passed.</span></span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>sce <span class="ot">&lt;-</span> sce[, <span class="sc">!</span>sce<span class="sc">$</span>discard]</span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(sce)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Your fixed rule—change these numbers and re-run.</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>fixed_discard <span class="ot">&lt;-</span> sce<span class="sc">$</span>sum <span class="sc">&lt;</span> <span class="dv">500</span> <span class="sc">|</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  sce<span class="sc">$</span>detected <span class="sc">&lt;</span> <span class="dv">300</span> <span class="sc">|</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  sce<span class="sc">$</span>subsets_Mito_percent <span class="sc">&gt;</span> <span class="dv">10</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Where do the two rules agree, and where do they disagree?</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(<span class="at">adaptive =</span> sce<span class="sc">$</span>discard, <span class="at">fixed =</span> fixed_discard)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<div class="callout callout-style-default callout-note callout-titled" title="Optional: try fixed thresholds">
-<div class="callout-header d-flex align-content-center">
-<div class="callout-icon-container">
-<i class="callout-icon"></i>
-</div>
-<div class="callout-title-container flex-fill">
-<span class="screen-reader-only">Note</span>Optional: try fixed thresholds
-</div>
-</div>
-<div class="callout-body-container callout-body">
-<p>As an exercise, define your own fixed cutoffs and compare. Do they keep the same cells the adaptive rule kept?</p>
+<p>Look at the off-diagonal counts—the cells only <em>one</em> rule drops—and ask why. A cell the adaptive rule keeps but your fixed rule cuts might be a genuinely small but healthy cell type; a cell your fixed rule keeps but the adaptive rule cuts might be a high-mito straggler. There is no universally correct cutoff—the right one depends on this tissue, protocol, and sequencing depth—so your job is to choose a rule you can <em>defend</em>, not to match an answer key.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>manual_discard <span class="ot">&lt;-</span> sce<span class="sc">$</span>sum <span class="sc">&lt;</span> <span class="dv">500</span> <span class="sc">|</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  sce<span class="sc">$</span>detected <span class="sc">&lt;</span> <span class="dv">300</span> <span class="sc">|</span></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  sce<span class="sc">$</span>subsets_Mito_percent <span class="sc">&gt;</span> <span class="dv">10</span></span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(manual_discard)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Apply your choice. We default to the adaptive rule so the tutorial proceeds;</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="co"># swap in `fixed_discard` if that is the call you would defend.</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>sce <span class="ot">&lt;-</span> sce[, <span class="sc">!</span>sce<span class="sc">$</span>discard]</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(sce)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 </section>
 </section>
@@ -459,7 +456,25 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a><span class="fu">length</span>(hvg)</span>
 <span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(hvg)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>2000 is a common default; more genes retain finer signal at the cost of more noise. This is a knob worth trying both ways once the pipeline works.</p>
+<p>2000 is a common default, not a magic number.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="Your decision: how many genes?">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Your decision: how many genes?
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Once the pipeline runs end to end, come back and treat this cutoff as a choice. See how much the gene set changes with it, then re-run the dimensionality reduction in Step 7 with a smaller and a larger set:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>hvg_1000 <span class="ot">&lt;-</span> <span class="fu">getTopHVGs</span>(dec, <span class="at">n =</span> <span class="dv">1000</span>)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>hvg_5000 <span class="ot">&lt;-</span> <span class="fu">getTopHVGs</span>(dec, <span class="at">n =</span> <span class="dv">5000</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Swap <code>hvg_1000</code> or <code>hvg_5000</code> into <code>runPCA(..., subset_row = ...)</code> and look at the UMAP: too few genes and you drop real structure, so distinct cell types start to merge; too many and technical noise creeps back in and blurs the clusters. Which cutoff gives the cleanest separation of the <code>Subclass</code> labels for <em>this</em> donor? Note your choice and your reasoning—there isn’t a single right value.</p>
+</div>
+</div>
 </section>
 <section id="step-7-reduce-dimensionality" class="level2">
 <h2 class="anchored" data-anchor-id="step-7-reduce-dimensionality">Step 7 — Reduce dimensionality</h2>
@@ -470,22 +485,28 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </ol>
 <p>Both are randomized, so set a seed before each for reproducibility.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1234</span>)</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>sce <span class="ot">&lt;-</span> <span class="fu">runPCA</span>(sce, <span class="at">subset_row =</span> hvg, <span class="at">ncomponents =</span> <span class="dv">50</span>)</span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="co"># How much variance each PC explains—look for where the curve flattens.</span></span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>pct_var <span class="ot">&lt;-</span> <span class="fu">attr</span>(<span class="fu">reducedDim</span>(sce, <span class="st">"PCA"</span>), <span class="st">"percentVar"</span>)</span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(pct_var, <span class="at">xlab =</span> <span class="st">"PC"</span>, <span class="at">ylab =</span> <span class="st">"% variance explained"</span>, <span class="at">type =</span> <span class="st">"b"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1234</span>)</span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>sce <span class="ot">&lt;-</span> <span class="fu">runUMAP</span>(sce, <span class="at">dimred =</span> <span class="st">"PCA"</span>)</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>sce <span class="ot">&lt;-</span> <span class="fu">runPCA</span>(sce, <span class="at">subset_row =</span> hvg, <span class="at">ncomponents =</span> <span class="dv">50</span>)</span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="fu">reducedDimNames</span>(sce)         <span class="co"># "PCA" and "UMAP"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="co"># How much variance each PC explains—look for where the curve flattens.</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>pct_var <span class="ot">&lt;-</span> <span class="fu">attr</span>(<span class="fu">reducedDim</span>(sce, <span class="st">"PCA"</span>), <span class="st">"percentVar"</span>)</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(pct_var, <span class="at">xlab =</span> <span class="st">"PC"</span>, <span class="at">ylab =</span> <span class="st">"% variance explained"</span>, <span class="at">type =</span> <span class="st">"b"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
+<section id="your-decision-how-many-pcs-to-keep" class="level3">
+<h3 class="anchored" data-anchor-id="your-decision-how-many-pcs-to-keep">Your decision: how many PCs to keep</h3>
+<p>The scree plot is there for a real choice, not decoration. Downstream steps don’t need all 50 PCs—only the ones carrying structure, before the curve flattens into noise. Read the elbow off the plot above and keep that many:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>n_pcs <span class="ot">&lt;-</span> <span class="dv">20</span>   <span class="co"># your call—read it from the elbow in the scree plot</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1234</span>)</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>sce <span class="ot">&lt;-</span> <span class="fu">runUMAP</span>(sce, <span class="at">dimred =</span> <span class="st">"PCA"</span>, <span class="at">n_dimred =</span> <span class="fu">seq_len</span>(n_pcs))</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a><span class="fu">reducedDimNames</span>(sce)         <span class="co"># "PCA" and "UMAP"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Keep too few PCs and you throw away real structure; keep too many and you feed noise into the layout. Try a couple of values for <code>n_pcs</code> and watch whether the <code>Subclass</code> clusters sharpen or blur.</p>
 <p>Now look at the embedding, colored by the cell-type labels from tutorial 01. If preprocessing worked, cells of the same <code>Subclass</code> should land together.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plotReducedDim</span>(sce, <span class="st">"UMAP"</span>, <span class="at">colour_by =</span> <span class="st">"Subclass"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plotReducedDim</span>(sce, <span class="st">"UMAP"</span>, <span class="at">colour_by =</span> <span class="st">"Subclass"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <div class="callout callout-style-default callout-tip callout-titled" title="Read the map critically">
 <div class="callout-header d-flex align-content-center">
@@ -501,11 +522,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </section>
+</section>
 <section id="step-8-save-the-preprocessed-object" class="level2">
 <h2 class="anchored" data-anchor-id="step-8-save-the-preprocessed-object">Step 8 — Save the preprocessed object</h2>
 <p>Both tracks start here, so save the result. The repo keeps generated analysis outputs in the top-level <code>outputs/</code> folder, which <code>.gitignore</code> already excludes from version control—so the object won’t get committed by accident.</p>
 <div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(sce, <span class="st">"../../outputs/sce_preprocessed.rds"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(sce, <span class="st">"../../outputs/sce_preprocessed.rds"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
 <p>The two analysis tracks reload it with <code>readRDS("../../outputs/sce_preprocessed.rds")</code>.</p>
 </section>
@@ -518,6 +540,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li>a 2000-gene HVG set in <code>hvg</code>, and</li>
 <li><code>PCA</code> and <code>UMAP</code> in <code>reducedDims(sce)</code>.</li>
 </ul>
+<div class="callout callout-style-default callout-important callout-titled" title="Your choices are part of the result">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Your choices are part of the result
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>You made real decisions in this tutorial—which cells to cut, how many genes to keep, how many PCs to trust. None had a single correct answer, and a classmate who chose differently will end up with a slightly different object. That is normal in single-cell analysis, not a mistake to hide. Before moving on, look back over your QC, HVG, and PCA choices and ask: <strong>which of these could you defend to a skeptical reviewer, and which were just the default I left in?</strong> The ones you can’t yet defend are the ones worth revisiting.</p>
+</div>
+</div>
 </section>
 <section id="where-this-goes-next" class="level2">
 <h2 class="anchored" data-anchor-id="where-this-goes-next">Where this goes next</h2>

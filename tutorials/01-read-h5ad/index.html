@@ -291,6 +291,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li>Column names with spaces need backticks, as with <code>Overall AD neuropathological Change</code>. Copy the capitalization exactly as <code>colnames(colData(sce))</code> prints it—here the “n” in “neuropathological” is lowercase.</li>
 <li>Because this is a single donor, <code>Sex</code> and the pathology score are the same for every cell. The differences you care about appear only when you compare donors, which is the next step in both tracks.</li>
 </ol>
+<div class="callout callout-style-default callout-important callout-titled" title="Your deliverable: a variable dictionary">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Your deliverable: a variable dictionary
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>As you explore, keep a running <strong>variable dictionary</strong>—your own notes on the <code>colData</code> columns: what each one means, whether it is categorical or continuous, and whether it describes a single <em>cell</em> or the whole <em>donor</em>. This is your artifact, not a graded worksheet, and you will lean on it constantly: the grouping variables, confounders, and contrasts you choose in later tutorials all come from here. Start it now with the columns above—<code>Subclass</code>, <code>Supertype</code>, <code>Sex</code>, <code>Overall AD neuropathological Change</code>, and the continuous pathology score—and add to it whenever you meet a new column. Nobody hands you the “right” set of variables; deciding which ones matter for your question is the first piece of the analysis that is genuinely yours.</p>
+</div>
+</div>
 </section>
 <section id="step-5-subset-to-one-cell-type" class="level2">
 <h2 class="anchored" data-anchor-id="step-5-subset-to-one-cell-type">Step 5 — Subset to one cell type</h2>
@@ -368,7 +381,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="where-this-goes-next" class="level2">
 <h2 class="anchored" data-anchor-id="where-this-goes-next">Where this goes next</h2>
-<p>You now have a <code>SingleCellExperiment</code> for one donor and know where sex, pathology, and cell type live in it. From here, the project tracks diverge:</p>
+<p>You now have a <code>SingleCellExperiment</code> for one donor and know where sex, pathology, and cell type live in it.</p>
+<p>Before you move on, spend a few minutes exploring on your own—this is where the analysis choices you’ll make later begin:</p>
+<ul>
+<li>Browse the full metadata with <code>colnames(colData(sce))</code> and a few <code>table()</code> or <code>summary()</code> calls. Which variables would you use to compare <em>cells</em> within this donor? Which only make sense when comparing <em>donors</em>?</li>
+<li>Which columns look like they could be <strong>confounders</strong>—things that might track with pathology but aren’t pathology itself (sex, age, post-mortem interval, RNA quality)? Note them in your variable dictionary; you’ll decide what to <em>do</em> about them when you run a real comparison.</li>
+</ul>
+<p>There isn’t one right answer here—the point is to start reasoning about this as <em>your</em> dataset rather than a fixed recipe.</p>
+<p>From here, the project tracks diverge:</p>
 <ul>
 <li><strong>Pseudobulk analysis:</strong> repeat this loading process over donors, then perform per-donor pseudobulk aggregation.</li>
 <li><strong>Trajectory analysis:</strong> run PCA and UMAP on your chosen cell type, then anchor the <code>slingshot</code> trajectory in low-pathology cells.</li>
