@@ -13,6 +13,8 @@ website:
         text: "01: Read H5AD"
       - href: tutorials/02-preprocessing/index.qmd
         text: "02: Preprocessing"
+      - href: tutorials/03a-pseudobulk/index.qmd
+        text: "03a: Pseudobulk generation"
 
 format:
   html:

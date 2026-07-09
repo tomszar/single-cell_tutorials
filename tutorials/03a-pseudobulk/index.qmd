@@ -1,0 +1,326 @@
+---
+title: "Building pseudobulk profiles from single cells"
+subtitle: "Collapsing a donor's cells into one count profile per cell type"
+author:
+  - name: "IPRE Winter 2026 · MOTCO · research line IPI-26-1206"
+format:
+  html:
+    toc: true
+    code-copy: true
+execute:
+  eval: false
+---
+
+Tutorials [01](../01-read-h5ad/index.qmd) and [02](../02-preprocessing/index.qmd)
+stayed inside a *single* donor: enough to learn the object and the preprocessing
+steps, but not enough to answer the question the SEA-AD project actually cares
+about—**which genes change with Alzheimer's pathology?** That is a comparison
+*between* people, and comparing people is *differential expression*, which is the
+next tutorial ([04](../04-pseudobulk-de/index.qmd)).
+
+Before you can compare people, though, you need the right **unit** to compare.
+The mistake, once you have hundreds of thousands of cells, is to treat every cell
+as an independent data point and test gene by gene—pool all the astrocytes from
+low-pathology donors, all the astrocytes from high-pathology donors, and compare
+the two piles. That answer is statistically wrong (we'll see why below), and the
+fix is **pseudobulk**: collapse each donor's cells of a given type into *one*
+summed count profile. This tutorial builds that unit for a single donor. Stacking
+many donors' profiles—the input the differential-expression tutorial needs—is
+then a short loop you'll write at the end.
+
+## Learning objectives
+
+By the end of this tutorial you should be able to:
+
+- Explain why the **donor is the unit of replication** in a cross-condition
+  comparison, and why per-cell tests commit *pseudoreplication*—treating
+  non-independent cells as independent and massively inflating significance.
+- Aggregate one donor's single-cell counts into **pseudobulk** profiles, one per
+  cell type, with `aggregateAcrossCells`.
+- Inspect and save a per-donor pseudobulk object, keeping the data as integer
+  counts.
+- Describe how to scale the same step across a cohort of donors to produce the
+  matrix a differential-expression test consumes.
+
+**Prerequisites:** tutorials 00–02. This tutorial reuses the single donor you
+already downloaded in tutorial 01 (`H20.33.001`)—no new download needed. It
+reuses the loading pattern from tutorial 01 and the QC logic from tutorial 02.
+
+Unlike the trajectory track, pseudobulk does **not** reuse the normalized object
+from tutorial 02: it works from *raw counts* (you sum counts, then let the DE
+step do its own normalization).
+
+**Expected outcome:** a pseudobulk object for one donor—rows are genes, columns
+are cell types, values are summed raw UMI counts—saved to `outputs/`, ready to be
+stacked with other donors in tutorial 04.
+
+## Step 1 — Install the R packages
+
+Everything here comes from the earlier tutorials: `schard` (loading), the
+`SingleCellExperiment` container, and `scuttle` (QC and aggregation). There is no
+new package to install for *generating* pseudobulk—the differential-expression
+tool (`edgeR`) enters in tutorial 04.
+
+```{r}
+if (!requireNamespace("BiocManager", quietly = TRUE)) {
+  install.packages("BiocManager")
+}
+BiocManager::install(c("SingleCellExperiment", "scuttle"))
+# schard is on GitHub; install with remotes if you don't have it yet:
+# remotes::install_github("cellgeni/schard")
+```
+
+If you are on the Nix dev shell, these are already built—you do not need to run
+`install.packages`.
+
+## Step 2 — Why pseudobulk? The pseudoreplication trap
+
+Imagine two groups of donors—low pathology and high pathology—and suppose you
+have 5,000 astrocytes from each group. A per-cell test (a *t*-test or a
+single-cell DE method) treats those 10,000 cells as 10,000 independent
+observations. They are not. Cells from the same donor share that donor's
+genotype, age, medications, RNA quality, and dissection batch; they are far more
+alike than cells from different donors. Statistically, they are
+**pseudoreplicates**—repeated measurements of the *same* biological unit, not new
+biological units.
+
+The consequence is severe. With thousands of correlated cells, the standard
+error shrinks toward zero and almost every gene comes out "significant," even
+genes that differ only because of one unusual donor. The test is answering "are
+these two piles of cells different?"—which they always are—instead of "does
+pathology change expression *across people*?", which is the question you meant to
+ask.
+
+**Pseudobulk** restores the right unit of analysis. For each donor, sum the
+counts across all cells of one type into a single profile. Now each donor
+contributes *one* number per gene, so a cohort of, say, 12 donors gives 12
+independent replicates—exactly the design that bulk RNA-seq methods like `edgeR`
+and `limma-voom` were built for. Summing (not averaging) keeps the data as
+integer counts, so the count-based noise models still apply, and it correctly
+gives more weight to donors and cell types with more cells.
+
+That is the whole idea of this tutorial: turn one donor's tens of thousands of
+cells into a compact table of **one summed profile per cell type**. Do that for
+every donor, stack the tables, and you have the matrix the
+differential-expression tutorial tests.
+
+::: {.callout-note title="This is now the field's default"}
+Early single-cell DE papers used per-cell tests and reported thousands of hits.
+Later re-analyses ([Squair et al. 2021](https://doi.org/10.1038/s41467-021-25960-2),
+[Crowell et al. 2020](https://doi.org/10.1038/s41467-020-19894-4)) showed that
+pseudobulk with donor-level replication controls false positives far better.
+For a cross-condition comparison with biological replicates, pseudobulk is the
+default recommendation.
+:::
+
+## Step 3 — The donor and its cell types
+
+We use the donor from tutorial 01, `H20.33.001`, already saved as
+`data/sea-ad/donor_H20.33.001.h5ad`. Aggregation groups cells by **cell type**,
+and SEA-AD provides a ready-made label for that: the `Subclass` column (e.g.
+`Astrocyte`, `Oligodendrocyte`, `L2/3 IT`, `Pvalb`). Each `Subclass` will become
+one column of the pseudobulk profile.
+
+The two donor-level columns we also carry along—so the profile remembers *whose*
+cells it summed—are `Donor ID` and `Overall AD neuropathological Change` (the
+donor's ADNC pathology grade). These are constant within a donor.
+
+## Step 4 — Load and lightly QC the donor
+
+We load the donor, swap in the raw UMI counts (SEA-AD's `X` assay is already
+log-normalized—see tutorial 02, Step 2), and apply the same count-based QC as
+tutorial 02. Wrapping it in a function pays off in Step 8, when you reuse the
+exact same step for every donor in a cohort.
+
+```{r}
+library(schard)
+library(SingleCellExperiment)
+library(scuttle)
+
+data_dir <- "../../data/sea-ad"
+
+load_donor <- function(id) {
+  h5 <- file.path(data_dir, paste0("donor_", id, ".h5ad"))
+
+  # Load the object and swap in the raw UMI counts (see tutorial 02, Step 2).
+  sce <- schard::h5ad2sce(h5)
+  counts_mat <- schard::h5ad2Matrix(h5, "layers/UMIs")
+  dimnames(counts_mat) <- dimnames(sce)
+  counts(sce) <- counts_mat
+  assay(sce, "X") <- NULL
+
+  # Count-based QC: drop low-quality nuclei (tutorial 02, Steps 3–4).
+  is_mito <- grepl("^MT-", rownames(sce))
+  sce <- addPerCellQCMetrics(sce, subsets = list(Mito = is_mito))
+  discard <- perCellQCFilters(sce, sub.fields = "subsets_Mito_percent")$discard
+  sce <- sce[, !discard]
+
+  sce
+}
+
+sce <- load_donor("H20.33.001")
+sce
+```
+
+Confirm the columns we group and label on are present, and that the donor-level
+ones really are constant within this donor.
+
+```{r}
+table(sce$Subclass)                                  # cell types to aggregate over
+unique(sce$`Donor ID`)                               # one value: the donor
+unique(sce$`Overall AD neuropathological Change`)    # one value: this donor's ADNC
+```
+
+## Step 5 — Aggregate to pseudobulk
+
+`aggregateAcrossCells` (from `scuttle`) sums the count matrix within groups of
+cells. We group by **cell type** (`Subclass`); because this is a single donor,
+every cell already belongs to the same donor, so the result is one summed profile
+per cell type for this one donor. The donor-level columns carry through unchanged,
+and the result records how many cells went into each sum (`ncells`).
+
+```{r}
+pb <- aggregateAcrossCells(
+  sce,
+  ids = sce$Subclass,
+  use.assay.type = "counts",
+  statistics = "sum"
+)
+pb
+```
+
+`pb` is itself a `SingleCellExperiment`: same genes as before (the rows), but now
+just one column per cell type instead of tens of thousands of cells.
+
+::: {.callout-important title="Aggregate raw counts, not normalized values"}
+Pseudobulk sums **counts**, which is why tutorial 02's normalized `logcounts`
+are the wrong input here—you cannot meaningfully sum log-normalized values, and
+the DE step needs integer counts to model. We deliberately reloaded the raw
+`UMIs` layer in `load_donor` for exactly this reason.
+:::
+
+## Step 6 — Inspect the profiles
+
+Look at what you built: how many cells stand behind each cell type's profile, and
+what the summed counts look like.
+
+```{r}
+# Cells summed into each cell-type profile, largest first.
+sort(pb$ncells, decreasing = TRUE)
+
+# The aggregation key is stored in `ids`; name the columns by cell type.
+colnames(pb) <- pb$ids
+
+# A corner of the pseudobulk matrix: genes (rows) x cell types (columns).
+assay(pb, "counts")[1:5, 1:5]
+```
+
+Two things to notice. First, the columns are wildly different in depth—an
+abundant type like `L2/3 IT` may sum millions of counts while a rare type sums a
+few thousand. That is expected, and the DE step's normalization (tutorial 04)
+handles it. Second, a profile summed from only a handful of cells is mostly
+noise; when you scale up, you'll drop cell types with too few cells per donor
+(a common cutoff is `ncells >= 10`).
+
+## Step 7 — Save the per-donor profile
+
+Save this donor's pseudobulk so the next tutorial (and your own scale-up) can
+reuse it without recomputing. `outputs/` is git-ignored.
+
+```{r}
+dir.create("../../outputs", showWarnings = FALSE)
+saveRDS(pb, "../../outputs/pseudobulk_H20.33.001.rds")
+```
+
+## Step 8 — Scale up: from one donor to a cohort {#sec-scaleup}
+
+Differential expression needs **many** donors—the donor is the replicate—spanning
+the pathology range so there is something to compare. SEA-AD grades each donor
+with **Overall AD neuropathological Change (ADNC)**: `Not AD`, `Low`,
+`Intermediate`, `High`. A common two-group split is **low** (`Not AD`, `Low`)
+versus **high** (`Intermediate`, `High`).
+
+Everything you need to build the cohort matrix is already in hand: `load_donor`
+works for *any* donor ID, and `aggregateAcrossCells` collapses each one the same
+way. The scale-up is a loop.
+
+::: {.callout-tip title="Exercise — build the cohort pseudobulk"}
+This is your first substantial autonomous step, and the input to tutorial 04.
+
+1. **Choose a cohort.** Assemble a set of donors that spans pathology and is
+   *balanced* on the obvious confounds—sex above all, and ideally comparable age,
+   post-mortem interval (PMI), and RNA quality (RIN). Donor-level metadata for
+   every SEA-AD donor is in the file
+   `PFC/RNAseq/SEAAD_DFC_RNAseq_final-nuclei_metadata.<date>.csv` on the
+   [data browser](https://sea-ad-single-cell-profiling.s3.amazonaws.com/index.html);
+   the columns you need are `Donor ID`, `Sex`, `Age at Death`, `PMI`, `RIN`, and
+   `Overall AD neuropathological Change`. Download each chosen donor's `.h5ad`
+   into `data/sea-ad/` exactly as in tutorial 01.
+2. **Loop and aggregate.** Load each donor, aggregate it to pseudobulk, and keep
+   only the small pseudobulk object—so only one full-size donor is ever in memory:
+
+   ```{r}
+   donor_ids <- c("H20.33.001", "H19.33.004", "H20.33.018" #, ... your cohort
+   )
+
+   pb_list <- lapply(donor_ids, function(id) {
+     message("Aggregating ", id)
+     donor_sce <- load_donor(id)
+     aggregateAcrossCells(donor_sce, ids = donor_sce$Subclass,
+                          use.assay.type = "counts", statistics = "sum")
+   })
+   ```
+3. **Combine into one object**, columns = donor × cell type:
+
+   ```{r}
+   # cbind needs identical genes in identical order across donors.
+   common  <- Reduce(intersect, lapply(pb_list, rownames))
+   pb_list <- lapply(pb_list, function(x) x[common, ])
+   pb_all  <- do.call(cbind, pb_list)
+   saveRDS(pb_all, "../../outputs/pseudobulk_cohort.rds")
+   ```
+
+**Optional / advanced:** a class-sized cohort is a compromise. More donors mean
+more statistical power and less sensitivity to any single unusual brain—the donor
+is your replicate, so *donor count*, not cell count, is what limits the analysis.
+How many donors do you think you'd need to reliably detect a real change? You'll
+get an empirical feel for that in tutorial 04.
+:::
+
+## What you produced
+
+- A per-donor pseudobulk object for `H20.33.001`: genes × cell type, summed from
+  raw UMIs after per-cell QC, saved to `outputs/`.
+- A reusable `load_donor` function and the recipe to stack many donors into the
+  cohort matrix that differential expression consumes.
+
+## Where this connects
+
+- [Tutorial 04 — pseudobulk differential expression](../04-pseudobulk-de/index.qmd)
+  takes the stacked cohort matrix and tests, within one cell type, which genes
+  change between low- and high-pathology donors.
+- The other analysis track, [trajectory](../02-preprocessing/index.qmd), asks a
+  different question of the same data—*ordering* cells along a continuous process
+  rather than *comparing* groups of donors. Pseudobulk's unit is the donor;
+  trajectory's is the individual cell.
+
+## If something breaks
+
+::: {.callout-warning title="`aggregateAcrossCells` can't find `Subclass`"}
+Column names must match exactly. Reprint them with
+`colnames(colData(sce))` and copy the label as shown (see tutorial 01 on
+backticks for names with spaces).
+:::
+
+::: {.callout-warning title="`cbind` fails during scale-up: rows/genes don't match"}
+`do.call(cbind, pb_list)` needs every donor to have the same genes in the same
+order. Different donor files can carry slightly different feature sets; intersect
+to the common genes first, as shown in Step 8 (`common <- Reduce(intersect,
+...)`), before combining.
+:::
+
+::: {.callout-warning title="A cell type has very few cells"}
+A pseudobulk profile summed from a handful of nuclei is mostly noise. Check
+`sort(pb$ncells)`; when you scale up, drop donor × cell-type columns below a
+cutoff (e.g. `ncells >= 10`) rather than trusting them.
+:::

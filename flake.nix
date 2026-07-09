@@ -45,6 +45,11 @@
           scran
           scater
           uwot
+          # Tutorial 04 pseudobulk differential expression: count-based DE
+          # (edgeR pulls in limma, but list it too for clarity). Tutorial 03a
+          # only generates pseudobulk and does not need these.
+          edgeR
+          limma
         ];
 
         rEnv = pkgs.rWrapper.override { packages = rPkgs; };
