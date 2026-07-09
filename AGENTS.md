@@ -35,6 +35,19 @@ than duplicating every tutorial.
 - State learning objectives, prerequisites, and expected outcomes.
 - Use realistic SEA-AD examples while keeping runtimes practical for a class.
 - Distinguish required exercises from optional or advanced material.
+- Design for student autonomy. Fully scaffold the mechanical plumbing (loading,
+  QC, aggregation, tool syntax), but leave the *scientific* decisions to the
+  reader — experimental/cohort design, the contrast, cell-type choice,
+  confounders, and interpretation. Those decisions are where a sense of
+  accomplishment comes from; tutorials that leave only parameters to tweak do
+  not.
+- Prefer ending a tutorial at a genuine open question over a pre-cooked answer.
+  A null or ambiguous result is an honest, valuable endpoint that invites the
+  reader's own analysis, not a failure to fix.
+- Split an expensive generation step from the analysis it feeds: have the costly
+  step (e.g. loading many large donor files) save a small object that the
+  analysis loads, so readers can iterate on the science in seconds instead of
+  re-running the plumbing.
 - Favor reproducible code over manual, undocumented steps.
 - Set random seeds when results depend on randomness.
 - Record package and data requirements.

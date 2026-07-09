@@ -82,6 +82,15 @@ These come from `AGENTS.md` and apply to any tutorial content you write or edit:
   ~35 GB all-cohort file, both for runtime and to avoid a known
   integer-overflow limitation when reading very large `.h5ad` files this way).
 - Distinguish required vs. optional/advanced exercises.
+- Design for student autonomy: fully scaffold the mechanical plumbing (loading,
+  QC, aggregation, tool syntax) but leave the *scientific* decisions —
+  cohort/experimental design, the contrast, cell-type choice, confounders,
+  interpretation — to the reader. Ending at a genuine open question (including a
+  null result) is an honest, valuable endpoint, not a failure to fix.
+- Split an expensive generation step from the analysis it feeds: have the costly
+  step (e.g. loading many large donor files) save a small object that the
+  analysis loads, so readers can iterate on the science quickly. This is why the
+  pseudobulk track is 03a (generation) + 04 (differential expression).
 - Set random seeds for anything depending on randomness.
 - Prefer small, readable analysis steps over dense pipelines; comment on
   reasoning, not on syntax that's already obvious.
