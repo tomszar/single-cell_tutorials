@@ -109,7 +109,7 @@ ul.task-list li input[type="checkbox"] {
   </li>  
   <li class="nav-item">
     <a class="nav-link" href="./tutorials/03a-pseudobulk/index.html"> 
-<span class="menu-text">03a: Pseudobulk</span></a>
+<span class="menu-text">03a: Pseudobulk generation</span></a>
   </li>  
 </ul>
           </div> <!-- /navcollapse -->
@@ -133,7 +133,8 @@ ul.task-list li input[type="checkbox"] {
   <li><a href="#preprocessing" id="toc-preprocessing" class="nav-link" data-scroll-target="#preprocessing">02 — Preprocessing</a></li>
   <li><a href="#after-02-the-two-tracks" id="toc-after-02-the-two-tracks" class="nav-link" data-scroll-target="#after-02-the-two-tracks">After 02: the two tracks</a>
   <ul class="collapse">
-  <li><a href="#a-pseudobulk-track" id="toc-a-pseudobulk-track" class="nav-link" data-scroll-target="#a-pseudobulk-track">03a — Pseudobulk track</a></li>
+  <li><a href="#a-pseudobulk-generation-done" id="toc-a-pseudobulk-generation-done" class="nav-link" data-scroll-target="#a-pseudobulk-generation-done">03a — Pseudobulk generation (Done)</a></li>
+  <li><a href="#pseudobulk-differential-expression-planned" id="toc-pseudobulk-differential-expression-planned" class="nav-link" data-scroll-target="#pseudobulk-differential-expression-planned">04 — Pseudobulk differential expression (Planned)</a></li>
   <li><a href="#b-trajectory-track" id="toc-b-trajectory-track" class="nav-link" data-scroll-target="#b-trajectory-track">03b — Trajectory track</a></li>
   </ul></li>
   <li><a href="#open-questions" id="toc-open-questions" class="nav-link" data-scroll-target="#open-questions">Open questions</a></li>
@@ -184,12 +185,17 @@ ul.task-list li input[type="checkbox"] {
 </tr>
 <tr class="even">
 <td>03a</td>
-<td>Pseudobulk track</td>
-<td>Partial</td>
+<td>Pseudobulk — generation (aggregate one donor’s cells to per-cell-type profiles)</td>
+<td>Done</td>
 </tr>
 <tr class="odd">
 <td>03b</td>
 <td>Trajectory track</td>
+<td>Planned</td>
+</tr>
+<tr class="even">
+<td>04</td>
+<td>Pseudobulk — differential expression across AD pathology</td>
 <td>Planned</td>
 </tr>
 </tbody>
@@ -220,11 +226,20 @@ ul.task-list li input[type="checkbox"] {
 </section>
 <section id="after-02-the-two-tracks" class="level2">
 <h2 class="anchored" data-anchor-id="after-02-the-two-tracks">After 02: the two tracks</h2>
-<p>Both start from the tutorial-02 output and can be written in either order.</p>
-<section id="a-pseudobulk-track" class="level3">
-<h3 class="anchored" data-anchor-id="a-pseudobulk-track">03a — Pseudobulk track</h3>
-<p>Repeat loading across multiple donors, aggregate counts per donor × cell type into pseudobulk profiles, and run a donor-level differential expression comparison across AD pathology. Emphasize why pseudobulk (donor as the unit of replication) is the statistically honest approach for cross-condition comparisons, versus per-cell tests.</p>
-<p><em>Sketch:</em> multi-donor loading → per-donor/per-subclass aggregation (<code>aggregateAcrossCells</code>) → DE with an established bulk method (e.g.&nbsp;<code>edgeR</code> / <code>limma-voom</code>). Package and data requirements to be pinned when drafted.</p>
+<p>The trajectory track starts from the tutorial-02 embedding; the pseudobulk track reuses tutorial 02’s QC <em>logic</em> but works from raw counts, not its normalized object. They can be written in either order.</p>
+<p>The pseudobulk track is split into two tutorials, so the fiddly, fully-scaffolded plumbing (generation) is separated from the open-ended analysis (DE). This keeps each concept self-contained and — because DE runs off a small saved pseudobulk object rather than the ~11 GB of raw donor files — lets students iterate on the analysis (cell type, contrast, model) in seconds instead of re-loading everything.</p>
+<section id="a-pseudobulk-generation-done" class="level3">
+<h3 class="anchored" data-anchor-id="a-pseudobulk-generation-done">03a — Pseudobulk generation (Done)</h3>
+<p>Aggregate <strong>one</strong> donor’s single cells into per-cell-type pseudobulk profiles. Deliberately single-donor: it reuses the donor already downloaded in tutorial 01 (<code>H20.33.001</code>), runs in ~a minute, and produces a clean, always-working deliverable (a genes × cell-type count table). The core teaching point is the unit of replication / pseudoreplication argument that motivates summing to the donor level. Scaling the same step across a whole cohort is posed as the closing autonomous exercise (choose a balanced cohort from the SEA-AD donor metadata, loop <code>load_donor</code> + <code>aggregateAcrossCells</code>, <code>cbind</code> on common genes) — that cohort matrix is the input to tutorial 04.</p>
+<p><em>Built:</em> <code>schard</code> load + tutorial-02 QC wrapped in <code>load_donor</code> → per-<code>Subclass</code> aggregation (<code>aggregateAcrossCells</code>) → save to <code>outputs/</code>. Packages: <code>schard</code>, <code>SingleCellExperiment</code>, <code>scuttle</code> (no <code>edgeR</code> here).</p>
+</section>
+<section id="pseudobulk-differential-expression-planned" class="level3">
+<h3 class="anchored" data-anchor-id="pseudobulk-differential-expression-planned">04 — Pseudobulk differential expression (Planned)</h3>
+<p>Take the stacked multi-donor pseudobulk (the 03a scale-up exercise), pick a cell type, and run an <code>edgeR</code> quasi-likelihood test for genes that change between low- and high-pathology donors, adjusting for sex. Structured as <strong>core demo → open extensions</strong> so students own the scientific decisions (cell type, contrast, covariates, interpretation), not just parameter tweaks.</p>
+<p><em>Sketch:</em> load cohort pseudobulk → filter (<code>filterByExpr</code>) / TMM (<code>calcNormFactors</code>) / <code>glmQLFit</code> + <code>glmQLFTest</code> → <code>topTags</code> / <code>decideTests</code>, MA/volcano → interpret with caveats.</p>
+<p><strong>Key finding to design around (already tested on a 20-donor PFC cohort):</strong> a class-scale binary ADNC contrast yields <strong>no genome-wide-significant genes in any cell type</strong> — confirmed across binary low/high, extremes (<code>Not AD</code> vs <code>High</code>), and Braak-stage-as-continuous designs (closest was Pvalb interneurons, min FDR ≈ 0.05). This is expected — SEA-AD’s own significant hits lean on MTG, the full 84-donor cohort, and their continuous pseudo-progression score. So tutorial 04 should <strong>treat the null as the payoff</strong>, not a bug: the honest lesson is that class-sized cohorts are underpowered, and the open extensions (more donors, MTG vs PFC, a continuous severity score, interpreting near-hits) are where students go looking for signal.</p>
+<p><strong>Data-handoff decision (open):</strong> the full 20-donor pseudobulk object is only ~27 MB as an RDS, small enough to commit to <code>data/example/</code> so tutorial 04 runs top-to-bottom without the ~11 GB download. For now we are <strong>not</strong> committing it; revisit when 04 is drafted (commit the object vs.&nbsp;have 04’s setup regenerate it from the 03a scale-up loop).</p>
+<p><strong>Cohort used for the above test (a candidate 03a-scale-up answer key):</strong> 20 PFC donors, 10 low / 10 high ADNC, 5 F + 5 M per group, all RIN ≥ 8.3, focus cell type astrocyte (min ~140 nuclei/donor). Residual confound: ~9-year age gap (low median 82.5 vs high 91.5), which 04 can address by adding age to the model.</p>
 </section>
 <section id="b-trajectory-track" class="level3">
 <h3 class="anchored" data-anchor-id="b-trajectory-track">03b — Trajectory track</h3>
