@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="IPRE Winter 2026 · MOTCO · research line IPI-26-1206">
+
+<title>Pseudobulk differential expression across AD pathology – Single-cell analysis tutorials</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-2a1ff8acbc8026a50e853ea6c4bd46a5.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">Single-cell analysis tutorials</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../tutorials/00-setup/index.html"> 
+<span class="menu-text">00: Setup</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../tutorials/01-read-h5ad/index.html"> 
+<span class="menu-text">01: Read H5AD</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../tutorials/02-preprocessing/index.html"> 
+<span class="menu-text">02: Preprocessing</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link active" href="../../tutorials/03a-pseudobulk/index.html" aria-current="page"> 
+<span class="menu-text">03a: Pseudobulk</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#learning-objectives" id="toc-learning-objectives" class="nav-link active" data-scroll-target="#learning-objectives">Learning objectives</a></li>
+  <li><a href="#step-1-install-the-r-packages" id="toc-step-1-install-the-r-packages" class="nav-link" data-scroll-target="#step-1-install-the-r-packages">Step 1 — Install the R packages</a></li>
+  <li><a href="#step-2-why-pseudobulk-the-pseudoreplication-trap" id="toc-step-2-why-pseudobulk-the-pseudoreplication-trap" class="nav-link" data-scroll-target="#step-2-why-pseudobulk-the-pseudoreplication-trap">Step 2 — Why pseudobulk? The pseudoreplication trap</a></li>
+  <li><a href="#step-3-choose-your-donors" id="toc-step-3-choose-your-donors" class="nav-link" data-scroll-target="#step-3-choose-your-donors">Step 3 — Choose your donors</a></li>
+  <li><a href="#step-4-load-and-lightly-qc-each-donor" id="toc-step-4-load-and-lightly-qc-each-donor" class="nav-link" data-scroll-target="#step-4-load-and-lightly-qc-each-donor">Step 4 — Load and lightly QC each donor</a></li>
+  <li><a href="#step-5-aggregate-to-pseudobulk" id="toc-step-5-aggregate-to-pseudobulk" class="nav-link" data-scroll-target="#step-5-aggregate-to-pseudobulk">Step 5 — Aggregate to pseudobulk</a></li>
+  <li><a href="#step-6-pick-one-cell-type-and-build-the-edger-object" id="toc-step-6-pick-one-cell-type-and-build-the-edger-object" class="nav-link" data-scroll-target="#step-6-pick-one-cell-type-and-build-the-edger-object">Step 6 — Pick one cell type and build the <code>edgeR</code> object</a></li>
+  <li><a href="#step-7-filter-normalize-and-test" id="toc-step-7-filter-normalize-and-test" class="nav-link" data-scroll-target="#step-7-filter-normalize-and-test">Step 7 — Filter, normalize, and test</a></li>
+  <li><a href="#step-8-read-the-results" id="toc-step-8-read-the-results" class="nav-link" data-scroll-target="#step-8-read-the-results">Step 8 — Read the results</a></li>
+  <li><a href="#step-9-interpret-with-the-caveats-up-front" id="toc-step-9-interpret-with-the-caveats-up-front" class="nav-link" data-scroll-target="#step-9-interpret-with-the-caveats-up-front">Step 9 — Interpret, with the caveats up front</a></li>
+  <li><a href="#step-10-save-the-results" id="toc-step-10-save-the-results" class="nav-link" data-scroll-target="#step-10-save-the-results">Step 10 — Save the results</a></li>
+  <li><a href="#what-you-produced" id="toc-what-you-produced" class="nav-link" data-scroll-target="#what-you-produced">What you produced</a></li>
+  <li><a href="#where-this-connects" id="toc-where-this-connects" class="nav-link" data-scroll-target="#where-this-connects">Where this connects</a></li>
+  <li><a href="#if-something-breaks" id="toc-if-something-breaks" class="nav-link" data-scroll-target="#if-something-breaks">If something breaks</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Pseudobulk differential expression across AD pathology</h1>
+<p class="subtitle lead">Donors as replicates: aggregating single cells and testing with edgeR</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>IPRE Winter 2026 · MOTCO · research line IPI-26-1206 </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>Tutorials <a href="../../tutorials/01-read-h5ad/index.html">01</a> and <a href="../../tutorials/02-preprocessing/index.html">02</a> stayed inside a <em>single</em> donor: enough to learn the object and the preprocessing steps, but not enough to answer the question the SEA-AD project actually cares about—<strong>which genes change with Alzheimer’s pathology?</strong> That is a comparison <em>between</em> people, so this tutorial is the first that loads several donors at once.</p>
+<p>The temptation, once you have hundreds of thousands of cells, is to run a differential-expression test cell by cell: pool all the astrocytes from low-pathology donors, all the astrocytes from high-pathology donors, and compare the two piles. That answer is statistically wrong, and understanding <em>why</em> is the main idea of this tutorial. The fix—<strong>pseudobulk</strong>—is simple once you see the problem: collapse each donor’s cells of a given type into one summed profile, and compare those donor-level profiles the way you would a classic bulk RNA-seq experiment.</p>
+<section id="learning-objectives" class="level2">
+<h2 class="anchored" data-anchor-id="learning-objectives">Learning objectives</h2>
+<p>By the end of this tutorial you should be able to:</p>
+<ul>
+<li>Explain why the <strong>donor is the unit of replication</strong> in a cross-condition comparison, and why per-cell tests commit <em>pseudoreplication</em>—treating non-independent cells as independent and massively inflating significance.</li>
+<li>Load several donors and assemble a per-donor metadata table (pathology group, sex, age).</li>
+<li>Aggregate single-cell counts into <strong>pseudobulk</strong> profiles per donor × cell type with <code>aggregateAcrossCells</code>.</li>
+<li>Run a standard <code>edgeR</code> differential-expression pipeline—filtering, TMM normalization, dispersion estimation, and a quasi-likelihood test—on those profiles.</li>
+<li>Read the results table and an MA/volcano plot critically, and list the confounds that make a small brain-cohort comparison hard.</li>
+</ul>
+<p><strong>Prerequisites:</strong> tutorials 00–02. Unlike the trajectory track, this one does <strong>not</strong> reuse the saved object from tutorial 02: pseudobulk works from <em>raw counts</em> (you sum counts, then let <code>edgeR</code> do its own normalization), and it needs <em>many</em> donors rather than one. You will, however, reuse the loading pattern from tutorial 01 and the QC logic from tutorial 02.</p>
+<p><strong>Expected outcome:</strong> a pseudobulk count matrix (genes × donor) for one cell type, an <code>edgeR</code> results table ranking genes by differential expression between low- and high-pathology donors, and a defensible read of what it does and does not show.</p>
+</section>
+<section id="step-1-install-the-r-packages" class="level2">
+<h2 class="anchored" data-anchor-id="step-1-install-the-r-packages">Step 1 — Install the R packages</h2>
+<p>You already have <code>schard</code>, <code>SingleCellExperiment</code>, and <code>scuttle</code> from the earlier tutorials. The new tool is <code>edgeR</code>, the Bioconductor package for count-based differential expression; it pulls in <code>limma</code> as a dependency.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">requireNamespace</span>(<span class="st">"BiocManager"</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>)) {</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">install.packages</span>(<span class="st">"BiocManager"</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>BiocManager<span class="sc">::</span><span class="fu">install</span>(<span class="fu">c</span>(<span class="st">"edgeR"</span>, <span class="st">"limma"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>If you are on the Nix dev shell, these are already built—you do not need to run <code>install.packages</code>.</p>
+</section>
+<section id="step-2-why-pseudobulk-the-pseudoreplication-trap" class="level2">
+<h2 class="anchored" data-anchor-id="step-2-why-pseudobulk-the-pseudoreplication-trap">Step 2 — Why pseudobulk? The pseudoreplication trap</h2>
+<p>Imagine two groups of donors—low pathology and high pathology—and suppose you have 5,000 astrocytes from each group. A per-cell test (a <em>t</em>-test or a single-cell DE method) treats those 10,000 cells as 10,000 independent observations. They are not. Cells from the same donor share that donor’s genotype, age, medications, RNA quality, and dissection batch; they are far more alike than cells from different donors. Statistically, they are <strong>pseudoreplicates</strong>—repeated measurements of the <em>same</em> biological unit, not new biological units.</p>
+<p>The consequence is severe. With thousands of correlated cells, the standard error shrinks toward zero and almost every gene comes out “significant,” even genes that differ only because of one unusual donor. The test is answering “are these two piles of cells different?”—which they always are—instead of “does pathology change expression <em>across people</em>?”, which is the question you meant to ask.</p>
+<p><strong>Pseudobulk</strong> restores the right unit of analysis. For each donor, sum the counts across all cells of one type into a single profile. Now each donor contributes <em>one</em> number per gene, and a cohort of, say, 12 donors gives 12 independent replicates—exactly the design that bulk RNA-seq methods like <code>edgeR</code> and <code>limma-voom</code> were built for. Summing (not averaging) keeps the data as integer counts, so the count-based noise models still apply, and it correctly gives more weight to donors and cell types with more cells.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="This is now the field's default">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>This is now the field’s default
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Early single-cell DE papers used per-cell tests and reported thousands of hits. Later re-analyses (<a href="https://doi.org/10.1038/s41467-021-25960-2">Squair et al.&nbsp;2021</a>, <a href="https://doi.org/10.1038/s41467-020-19894-4">Crowell et al.&nbsp;2020</a>) showed that pseudobulk with donor-level replication controls false positives far better. For a cross-condition comparison with biological replicates, pseudobulk is the default recommendation.</p>
+</div>
+</div>
+</section>
+<section id="step-3-choose-your-donors" class="level2">
+<h2 class="anchored" data-anchor-id="step-3-choose-your-donors">Step 3 — Choose your donors</h2>
+<p>Pseudobulk lives or dies by the cohort you assemble. Two rules:</p>
+<ol type="1">
+<li><strong>Contrast on pathology.</strong> You need donors spanning the pathology range so there is something to compare. SEA-AD grades each donor with <strong>Overall AD neuropathological Change (ADNC)</strong>—<code>Not AD</code>, <code>Low</code>, <code>Intermediate</code>, <code>High</code>—a standard summary of amyloid and tau burden. We will collapse this into two groups: <strong>low</strong> (<code>Not AD</code>, <code>Low</code>) versus <strong>high</strong> (<code>Intermediate</code>, <code>High</code>).</li>
+<li><strong>Balance the confounds.</strong> Any variable that differs systematically between your groups can masquerade as a pathology effect. Sex and age are the usual suspects in a brain cohort; try to keep them comparable across groups, and we will also put sex in the model in Step 7.</li>
+</ol>
+<p>Download the donor files below from the <a href="https://sea-ad-single-cell-profiling.s3.amazonaws.com/index.html">SEA-AD data browser</a> exactly as in tutorial 01 (<strong><code>PFC</code> → <code>RNAseq</code> → <code>donors_objects</code></strong>), and save each into the shared <code>data/sea-ad/</code> folder named <code>donor_&lt;ID&gt;.h5ad</code>—for example <code>data/sea-ad/donor_H20.33.001.h5ad</code>. You already have the first one from tutorial 01.</p>
+<!-- DONOR_TABLE_PLACEHOLDER -->
+<div class="callout callout-style-default callout-tip callout-titled" title="Why these donors, and how many?">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Why these donors, and how many?
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>This is a deliberately small, balanced set chosen to run in a class session—a real study would use every available donor. More donors mean more statistical power and less sensitivity to any single unusual brain. The donor is your replicate, so <em>donor count</em>, not cell count, is what limits this analysis: going from 6 to 60 donors helps far more than sequencing more cells per donor.</p>
+</div>
+</div>
+</section>
+<section id="step-4-load-and-lightly-qc-each-donor" class="level2">
+<h2 class="anchored" data-anchor-id="step-4-load-and-lightly-qc-each-donor">Step 4 — Load and lightly QC each donor</h2>
+<p>We load one donor at a time, do the same count-based QC as tutorial 02, and immediately collapse it to pseudobulk—so only one full-size donor object is ever in memory. The function below wraps the tutorial-01 loading pattern and the tutorial-02 QC into a single reusable step.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(schard)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(SingleCellExperiment)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(scuttle)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>data_dir <span class="ot">&lt;-</span> <span class="st">"../../data/sea-ad"</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>load_donor <span class="ot">&lt;-</span> <span class="cf">function</span>(id) {</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  h5 <span class="ot">&lt;-</span> <span class="fu">file.path</span>(data_dir, <span class="fu">paste0</span>(<span class="st">"donor_"</span>, id, <span class="st">".h5ad"</span>))</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Load the object and swap in the raw UMI counts (see tutorial 02, Step 2).</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  sce <span class="ot">&lt;-</span> schard<span class="sc">::</span><span class="fu">h5ad2sce</span>(h5)</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>  counts_mat <span class="ot">&lt;-</span> schard<span class="sc">::</span><span class="fu">h5ad2Matrix</span>(h5, <span class="st">"layers/UMIs"</span>)</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">dimnames</span>(counts_mat) <span class="ot">&lt;-</span> <span class="fu">dimnames</span>(sce)</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">counts</span>(sce) <span class="ot">&lt;-</span> counts_mat</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">assay</span>(sce, <span class="st">"X"</span>) <span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Count-based QC: drop low-quality nuclei (tutorial 02, Steps 3–4).</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>  is_mito <span class="ot">&lt;-</span> <span class="fu">grepl</span>(<span class="st">"^MT-"</span>, <span class="fu">rownames</span>(sce))</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>  sce <span class="ot">&lt;-</span> <span class="fu">addPerCellQCMetrics</span>(sce, <span class="at">subsets =</span> <span class="fu">list</span>(<span class="at">Mito =</span> is_mito))</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>  discard <span class="ot">&lt;-</span> <span class="fu">perCellQCFilters</span>(sce, <span class="at">sub.fields =</span> <span class="st">"subsets_Mito_percent"</span>)<span class="sc">$</span>discard</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a>  sce <span class="ot">&lt;-</span> sce[, <span class="sc">!</span>discard]</span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>  sce</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Before looping over everyone, load one donor and confirm the metadata columns we will group on are there and constant within a donor.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>donor_ids <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="sc">&lt;!--</span> DONOR_IDS_PLACEHOLDER <span class="sc">-</span><span class="ot">-&gt;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>one <span class="ot">&lt;-</span> <span class="fu">load_donor</span>(donor_ids[<span class="dv">1</span>])</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co"># The three columns we rely on downstream:</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(one<span class="sc">$</span>Subclass)                                  <span class="co"># cell types to aggregate over</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="fu">unique</span>(one<span class="sc">$</span><span class="st">`</span><span class="at">Donor ID</span><span class="st">`</span>)                               <span class="co"># one value: the donor</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="fu">unique</span>(one<span class="sc">$</span><span class="st">`</span><span class="at">Overall AD neuropathological Change</span><span class="st">`</span>)    <span class="co"># one value: this donor's ADNC</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="step-5-aggregate-to-pseudobulk" class="level2">
+<h2 class="anchored" data-anchor-id="step-5-aggregate-to-pseudobulk">Step 5 — Aggregate to pseudobulk</h2>
+<p><code>aggregateAcrossCells</code> (from <code>scuttle</code>) sums the count matrix within groups of cells. We group by <strong>cell type</strong> (<code>Subclass</code>); because we process one donor at a time, every cell already belongs to the same donor, so each donor contributes one pseudobulk profile per cell type. The donor-level columns (<code>Donor ID</code>, ADNC, <code>Sex</code>) are constant within the donor, so they carry through unchanged, and the result records how many cells went into each sum (<code>ncells</code>).</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>pseudobulk_one <span class="ot">&lt;-</span> <span class="cf">function</span>(sce) {</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">aggregateAcrossCells</span>(</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    sce,</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">ids =</span> sce<span class="sc">$</span>Subclass,</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">use.assay.type =</span> <span class="st">"counts"</span>,</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">statistics =</span> <span class="st">"sum"</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Loop over donors, collapsing each to pseudobulk before moving on.</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>pb_list <span class="ot">&lt;-</span> <span class="fu">lapply</span>(donor_ids, <span class="cf">function</span>(id) {</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">message</span>(<span class="st">"Aggregating "</span>, id)</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pseudobulk_one</span>(<span class="fu">load_donor</span>(id))</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Combine into one object: rows = genes, columns = donor × cell type.</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>pb <span class="ot">&lt;-</span> <span class="fu">do.call</span>(cbind, pb_list)</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>pb</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Each column of <code>pb</code> is one donor’s summed counts for one cell type. Attach a tidy pathology group and confirm the layout.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Two-group pathology label from ADNC.</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>adnc <span class="ot">&lt;-</span> pb<span class="sc">$</span><span class="st">`</span><span class="at">Overall AD neuropathological Change</span><span class="st">`</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>pb<span class="sc">$</span>pathology <span class="ot">&lt;-</span> <span class="fu">factor</span>(</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ifelse</span>(adnc <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Not AD"</span>, <span class="st">"Low"</span>), <span class="st">"low"</span>, <span class="st">"high"</span>),</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"low"</span>, <span class="st">"high"</span>)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Cell type per column comes from the aggregation key.</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>pb<span class="sc">$</span>cell_type <span class="ot">&lt;-</span> pb<span class="sc">$</span>ids</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="co"># How many donors per pathology group, and cells behind each pseudobulk column?</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(pb<span class="sc">$</span>cell_type, pb<span class="sc">$</span>pathology)</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(pb<span class="sc">$</span>ncells)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="callout callout-style-default callout-important callout-titled" title="Aggregate raw counts, not normalized values">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Aggregate raw counts, not normalized values
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Pseudobulk sums <strong>counts</strong>, which is why tutorial 02’s normalized <code>logcounts</code> are the wrong input here—you cannot meaningfully sum log-normalized values, and <code>edgeR</code> needs integer counts to model. We deliberately reloaded the raw <code>UMIs</code> layer in <code>load_donor</code> for exactly this reason.</p>
+</div>
+</div>
+</section>
+<section id="step-6-pick-one-cell-type-and-build-the-edger-object" class="level2">
+<h2 class="anchored" data-anchor-id="step-6-pick-one-cell-type-and-build-the-edger-object">Step 6 — Pick one cell type and build the <code>edgeR</code> object</h2>
+<p>Differential expression runs <strong>within one cell type</strong>: a gene that goes up in microglia and down in astrocytes would cancel out if you mixed them. We focus on <!-- CELLTYPE_PLACEHOLDER -->, then keep only the pseudobulk columns for that type. Drop any donor with too few cells to trust—a pseudobulk profile summed from a handful of nuclei is mostly noise.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>focus <span class="ot">&lt;-</span> <span class="er">&lt;</span><span class="sc">!--</span> CELLTYPE_CODE_PLACEHOLDER <span class="sc">-</span><span class="ot">-&gt;</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>pb_ct <span class="ot">&lt;-</span> pb[, pb<span class="sc">$</span>cell_type <span class="sc">==</span> focus <span class="sc">&amp;</span> pb<span class="sc">$</span>ncells <span class="sc">&gt;=</span> <span class="dv">10</span>]</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="co"># One column per donor now:</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="fu">data.frame</span>(</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">donor     =</span> pb_ct<span class="sc">$</span><span class="st">`</span><span class="at">Donor ID</span><span class="st">`</span>,</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">pathology =</span> pb_ct<span class="sc">$</span>pathology,</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">sex       =</span> pb_ct<span class="sc">$</span>Sex,</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">n_cells   =</span> pb_ct<span class="sc">$</span>ncells</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Hand the count matrix to <code>edgeR</code> as a <code>DGEList</code>, carrying the per-donor metadata as the sample table.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(edgeR)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>y <span class="ot">&lt;-</span> <span class="fu">DGEList</span>(</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">counts  =</span> <span class="fu">assay</span>(pb_ct, <span class="st">"counts"</span>),</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">samples =</span> <span class="fu">as.data.frame</span>(<span class="fu">colData</span>(pb_ct)),</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">group   =</span> pb_ct<span class="sc">$</span>pathology</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>y<span class="sc">$</span>genes <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">gene =</span> <span class="fu">rownames</span>(pb_ct))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="step-7-filter-normalize-and-test" class="level2">
+<h2 class="anchored" data-anchor-id="step-7-filter-normalize-and-test">Step 7 — Filter, normalize, and test</h2>
+<p>Three standard <code>edgeR</code> steps precede the test:</p>
+<ul>
+<li><strong>Filter</strong> genes that are lowly expressed across the board—they carry no information and only cost you multiple-testing power. <code>filterByExpr</code> picks a sensible expression floor from the group sizes.</li>
+<li><strong>Normalize</strong> for composition with <strong>TMM</strong> (<code>calcNormFactors</code>). Even after summing, one donor can have a few genes dominating its library; TMM corrects for that so a handful of high genes don’t make everything else look down.</li>
+<li><strong>Model and test.</strong> We fit a negative-binomial model with a quasi-likelihood <em>F</em>-test (<code>glmQLFit</code>/<code>glmQLFTest</code>), the recommended <code>edgeR</code> workflow for designed experiments with replicates.</li>
+</ul>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>keep <span class="ot">&lt;-</span> <span class="fu">filterByExpr</span>(y, <span class="at">group =</span> y<span class="sc">$</span>samples<span class="sc">$</span>pathology)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>y <span class="ot">&lt;-</span> y[keep, , keep.lib.sizes <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>y <span class="ot">&lt;-</span> <span class="fu">calcNormFactors</span>(y)</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Model pathology, adjusting for sex so a sex imbalance can't masquerade as a</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="co"># pathology effect. coef = "pathologyhigh" is the high-vs-low contrast.</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>design <span class="ot">&lt;-</span> <span class="fu">model.matrix</span>(<span class="sc">~</span> Sex <span class="sc">+</span> pathology, <span class="at">data =</span> y<span class="sc">$</span>samples)</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>y <span class="ot">&lt;-</span> <span class="fu">estimateDisp</span>(y, design)</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">glmQLFit</span>(y, design)</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">glmQLFTest</span>(fit, <span class="at">coef =</span> <span class="st">"pathologyhigh"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="If your donors are all one sex">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>If your donors are all one sex
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><code>~ Sex + pathology</code> only makes sense if both sexes appear in your set. If you picked donors of a single sex, drop that term and use <code>design &lt;- model.matrix(~ pathology, data = y$samples)</code>. Balancing sex is better than ignoring it—but with a handful of donors you can’t always have both.</p>
+</div>
+</div>
+</section>
+<section id="step-8-read-the-results" class="level2">
+<h2 class="anchored" data-anchor-id="step-8-read-the-results">Step 8 — Read the results</h2>
+<p><code>topTags</code> ranks genes by evidence for a pathology effect; <code>decideTests</code> summarizes how many pass a false-discovery-rate cutoff.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">topTags</span>(res, <span class="at">n =</span> <span class="dv">20</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Up / not-significant / down at FDR &lt; 0.05:</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(<span class="fu">decideTests</span>(res))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The columns that matter: <strong><code>logFC</code></strong> is the log2 fold change (high vs low pathology; positive means higher in high-pathology donors), and <strong><code>FDR</code></strong> is the Benjamini–Hochberg-adjusted <em>p</em>-value—your significance yardstick once you are testing thousands of genes. A mean–difference (MA) plot shows the whole gene set at once, with the significant genes highlighted.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plotMD</span>(res, <span class="at">main =</span> <span class="fu">paste</span>(<span class="st">"High vs low pathology —"</span>, focus))</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">h =</span> <span class="dv">0</span>, <span class="at">col =</span> <span class="st">"grey"</span>, <span class="at">lty =</span> <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<!-- RESULTS_PLACEHOLDER -->
+<div class="callout callout-style-default callout-tip callout-titled" title="Optional: a volcano plot">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Optional: a volcano plot
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The MA plot puts fold change against expression level; a <em>volcano</em> plot puts fold change against significance, which some people find easier to read. Build one from the same results table:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>tt <span class="ot">&lt;-</span> <span class="fu">topTags</span>(res, <span class="at">n =</span> <span class="cn">Inf</span>)<span class="sc">$</span>table</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(tt<span class="sc">$</span>logFC, <span class="sc">-</span><span class="fu">log10</span>(tt<span class="sc">$</span>FDR),</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab =</span> <span class="st">"log2 fold change (high vs low)"</span>,</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>     <span class="at">ylab =</span> <span class="st">"-log10 FDR"</span>, <span class="at">pch =</span> <span class="dv">16</span>, <span class="at">cex =</span> <span class="fl">0.4</span>,</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>     <span class="at">col =</span> <span class="fu">ifelse</span>(tt<span class="sc">$</span>FDR <span class="sc">&lt;</span> <span class="fl">0.05</span>, <span class="st">"firebrick"</span>, <span class="st">"grey60"</span>))</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">h =</span> <span class="sc">-</span><span class="fu">log10</span>(<span class="fl">0.05</span>), <span class="at">lty =</span> <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</div>
+</section>
+<section id="step-9-interpret-with-the-caveats-up-front" class="level2">
+<h2 class="anchored" data-anchor-id="step-9-interpret-with-the-caveats-up-front">Step 9 — Interpret, with the caveats up front</h2>
+<p>A results table is easy to over-read. Before believing any gene:</p>
+<ul>
+<li><strong>Power is set by donor count.</strong> With only a handful of donors per group, you can detect only large, consistent effects; a short or empty hit list does not mean “nothing changes,” it means this cohort can’t resolve it. This is the single biggest limitation of a class-sized run.</li>
+<li><strong>Confounds.</strong> We adjusted for sex, but age, post-mortem interval, RNA quality (RIN), and dissection batch can all track with pathology. A real analysis checks these explicitly.</li>
+<li><strong>Cell-type assignment.</strong> Pseudobulk inherits the <code>Subclass</code> labels; if cells were mislabeled or a type is contaminated by ambient RNA, that noise flows into the profile.</li>
+<li><strong>Direction is relative to your grouping.</strong> <code>logFC &gt; 0</code> means higher in the <code>high</code> group <em>only because</em> of how we coded <code>pathology</code>; always re-check the contrast before writing a sentence about biology.</li>
+</ul>
+<p>Treat the ranked list as hypotheses. The honest next step is to see whether the top genes overlap known AD biology and whether they replicate in an independent cohort.</p>
+</section>
+<section id="step-10-save-the-results" class="level2">
+<h2 class="anchored" data-anchor-id="step-10-save-the-results">Step 10 — Save the results</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(res, <span class="st">"../../outputs/pseudobulk_de.rds"</span>)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">topTags</span>(res, <span class="at">n =</span> <span class="cn">Inf</span>)<span class="sc">$</span>table,</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"../../outputs/pseudobulk_de.csv"</span>,</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">row.names =</span> <span class="cn">FALSE</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="what-you-produced" class="level2">
+<h2 class="anchored" data-anchor-id="what-you-produced">What you produced</h2>
+<ul>
+<li>A pseudobulk count matrix, one column per donor × cell type, summed from raw UMIs after per-cell QC.</li>
+<li>An <code>edgeR</code> quasi-likelihood test of high- vs low-pathology donors within one cell type, adjusted for sex.</li>
+<li>A ranked, FDR-controlled results table saved to <code>outputs/</code>.</li>
+</ul>
+</section>
+<section id="where-this-connects" class="level2">
+<h2 class="anchored" data-anchor-id="where-this-connects">Where this connects</h2>
+<p>The other analysis track, <a href="../../tutorials/02-preprocessing/index.html">trajectory</a>, asks a different question of the same data—<em>ordering</em> cells along a continuous process rather than <em>comparing</em> groups of donors. Both start from SEA-AD single cells; they diverge in what they treat as the unit of analysis. Pseudobulk’s unit is the donor; trajectory’s is the individual cell.</p>
+</section>
+<section id="if-something-breaks" class="level2">
+<h2 class="anchored" data-anchor-id="if-something-breaks">If something breaks</h2>
+<div class="callout callout-style-default callout-warning callout-titled" title="`cbind` fails: rows/genes don't match">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span><code>cbind</code> fails: rows/genes don’t match
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><code>do.call(cbind, pb_list)</code> needs every donor to have the same genes in the same order. If a donor’s file has a different feature set, intersect to the common genes first: compute <code>common &lt;- Reduce(intersect, lapply(pb_list, rownames))</code> and subset each element to <code>common</code> before combining.</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-warning callout-titled" title="A pathology group has only one donor">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>A pathology group has only one donor
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><code>edgeR</code> cannot estimate variability from a single replicate. Check <code>table(pb$cell_type, pb$pathology)</code> and add donors until both groups have at least two—ideally three or more—in your focal cell type.</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-warning callout-titled" title="`filterByExpr` removes almost every gene">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span><code>filterByExpr</code> removes almost every gene
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>This usually means the pseudobulk libraries are tiny—your focal cell type is rare, so each donor’s sum is small. Confirm with <code>summary(pb_ct$ncells)</code> and either raise the <code>ncells</code> cutoff and re-examine, or choose a more abundant cell type.</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-warning callout-titled" title="`aggregateAcrossCells` can't find `Subclass`">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span><code>aggregateAcrossCells</code> can’t find <code>Subclass</code>
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Column names must match exactly. Reprint them with <code>colnames(colData(one))</code> and copy the label as shown (see tutorial 01 on backticks for names with spaces).</p>
+</div>
+</div>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/tomszar\.github\.io\/single-cell_tutorials\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

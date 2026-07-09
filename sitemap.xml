@@ -2,22 +2,26 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://tomszar.github.io/single-cell_tutorials/index.html</loc>
-    <lastmod>2026-07-08T18:42:57.226Z</lastmod>
+    <lastmod>2026-07-09T17:31:15.055Z</lastmod>
   </url>
   <url>
     <loc>https://tomszar.github.io/single-cell_tutorials/tutorials/01-read-h5ad/index.html</loc>
-    <lastmod>2026-07-08T18:42:57.226Z</lastmod>
+    <lastmod>2026-07-09T17:31:15.055Z</lastmod>
+  </url>
+  <url>
+    <loc>https://tomszar.github.io/single-cell_tutorials/tutorials/03a-pseudobulk/index.html</loc>
+    <lastmod>2026-07-09T17:31:15.055Z</lastmod>
   </url>
   <url>
     <loc>https://tomszar.github.io/single-cell_tutorials/ROADMAP.html</loc>
-    <lastmod>2026-07-08T18:42:57.225Z</lastmod>
+    <lastmod>2026-07-09T17:31:15.054Z</lastmod>
   </url>
   <url>
     <loc>https://tomszar.github.io/single-cell_tutorials/tutorials/02-preprocessing/index.html</loc>
-    <lastmod>2026-07-08T18:42:57.226Z</lastmod>
+    <lastmod>2026-07-09T17:31:15.055Z</lastmod>
   </url>
   <url>
     <loc>https://tomszar.github.io/single-cell_tutorials/tutorials/00-setup/index.html</loc>
-    <lastmod>2026-07-08T18:42:57.226Z</lastmod>
+    <lastmod>2026-07-09T17:31:15.055Z</lastmod>
   </url>
 </urlset>
