@@ -11,7 +11,7 @@
     "href": "index.html#tutorials",
     "title": "Single-cell analysis tutorials",
     "section": "Tutorials",
-    "text": "Tutorials\n\nTutorial 00: Setup\nTutorial 01: Read an H5AD file\nTutorial 02: Preprocessing\nTutorial 03a: Building pseudobulk profiles"
+    "text": "Tutorials\n\nTutorial 00: Setup\nTutorial 01: Read an H5AD file\nTutorial 02: Preprocessing\nTutorial 03a: Building pseudobulk profiles\nTutorial 03b: Ordering cells along a trajectory"
   },
   {
     "objectID": "tutorials/01-read-h5ad/index.html",
@@ -203,6 +203,118 @@
     "text": "Whether feature selection + dimensionality reduction stay in 02 or split into their own tutorial if 02 gets too long for one session."
   },
   {
+    "objectID": "tutorials/03b-trajectory/index.html",
+    "href": "tutorials/03b-trajectory/index.html",
+    "title": "Ordering cells along a trajectory",
+    "section": "",
+    "text": "The pseudobulk track asked a question about groups: collapse each donor to one profile per cell type and compare piles of people. This tutorial asks the opposite kind of question—one about a continuous process inside a single cell type. Some cell populations are not discrete resting states but snapshots of cells caught partway through a gradual change. The clearest example in brain tissue is the oligodendrocyte lineage: oligodendrocyte precursor cells (OPCs) mature into the myelinating oligodendrocytes that insulate axons, and a single snapshot of tissue catches cells all along that path.\nThere is no clock in the data telling you how far along each cell is. What we can recover instead is pseudotime: an ordering of cells along the progression, built purely from how their expression profiles change. This tutorial fits that ordering with slingshot, reads off which genes turn on and off along it (myelin genes should rise; OPC genes should fall), and—because pseudotime has no inherent direction—makes you supply the biology that says which end is the beginning.\nWe stay on the single donor from tutorials 01–02 (H20.33.001), reusing the preprocessed object you already saved, so the whole thing runs in a class session."
+  },
+  {
+    "objectID": "tutorials/03b-trajectory/index.html#learning-objectives",
+    "href": "tutorials/03b-trajectory/index.html#learning-objectives",
+    "title": "Ordering cells along a trajectory",
+    "section": "Learning objectives",
+    "text": "Learning objectives\nBy the end of this tutorial you should be able to:\n\nSay when a trajectory / pseudotime question is the right one—a continuous process within a lineage—versus a discrete group comparison.\nSubset a lineage from a preprocessed object and re-embed it on its own, and explain why the global UMAP is the wrong space for resolving within-lineage structure.\nFit a pseudotime with slingshot: cluster the lineage, choose a start cluster from marker genes, and extract the ordering.\nFind genes that change along pseudotime and read them as a biological program.\nExplain why pseudotime’s direction is imposed, not discovered, and defend the direction you chose.\n\nPrerequisites: tutorials 00–02. This tutorial reloads the object you saved at the end of tutorial 02 (outputs/sce_preprocessed.rds)—no new download, and no need to redo QC or normalization. It assumes you are comfortable with the SingleCellExperiment container and with reducedDims().\nExpected outcome: a lineage object (OPCs + oligodendrocytes) carrying a pseudotime value per cell and a ranked list of genes that vary along it, saved to outputs/—plus a clear sense of which parts of that result you can defend and which are artifacts of forcing a line through the data."
+  },
+  {
+    "objectID": "tutorials/03b-trajectory/index.html#step-1-install-the-r-packages",
+    "href": "tutorials/03b-trajectory/index.html#step-1-install-the-r-packages",
+    "title": "Ordering cells along a trajectory",
+    "section": "Step 1 — Install the R packages",
+    "text": "Step 1 — Install the R packages\nEverything except the trajectory fitter itself is already in hand from tutorial 02 (SingleCellExperiment, scran/scater/scuttle, and bluster, which scran pulls in for clustering). The one new tool is slingshot.\n\nif (!requireNamespace(\"BiocManager\", quietly = TRUE)) {\n  install.packages(\"BiocManager\")\n}\nBiocManager::install(\"slingshot\")\n\nBiocManager will pull in slingshot’s own dependencies (including TrajectoryUtils and DelayedMatrixStats) automatically. If you are on the Nix dev shell, slingshot is already built—you do not need to run BiocManager::install."
+  },
+  {
+    "objectID": "tutorials/03b-trajectory/index.html#step-2-what-pseudotime-is-and-what-it-is-not",
+    "href": "tutorials/03b-trajectory/index.html#step-2-what-pseudotime-is-and-what-it-is-not",
+    "title": "Ordering cells along a trajectory",
+    "section": "Step 2 — What pseudotime is, and what it is not",
+    "text": "Step 2 — What pseudotime is, and what it is not\nA trajectory method assumes your cells sample a continuous transition. Given their expression profiles, it lays down a smooth path through the point cloud and gives each cell a number—its pseudotime—measuring how far along that path it sits. Cells with similar profiles get similar pseudotimes; cells at the two ends get the extreme values.\nTwo cautions define the whole exercise:\n\nPseudotime is not real time. It is a distance along a path in expression space, not minutes or days. Two cells with the same pseudotime are transcriptionally similar; that is all the number promises.\nThe method never tells you which end is the start. A path has two ends; the algorithm fits the same curve whichever way you read it. Calling one end “the beginning” is a biological claim you make—here, that OPCs precede mature oligodendrocytes—and you justify it with known markers, not with the trajectory itself.\n\nThat second point is where your judgment enters, and it is deliberately left to you in Step 6.\n\n\n\n\n\n\nNoteContinuum vs. clusters—pick the right question\n\n\n\nTrajectory analysis only makes sense when the biology is a gradient. If your populations are genuinely discrete states with no cells in between, forcing a curve through them invents an ordering that means nothing. The oligodendrocyte lineage is a good trajectory target because maturation is gradual and the intermediate cells exist. Before you fit a trajectory to any population, ask first whether a continuum is even the right model for it."
+  },
+  {
+    "objectID": "tutorials/03b-trajectory/index.html#step-3-reload-the-preprocessed-donor",
+    "href": "tutorials/03b-trajectory/index.html#step-3-reload-the-preprocessed-donor",
+    "title": "Ordering cells along a trajectory",
+    "section": "Step 3 — Reload the preprocessed donor",
+    "text": "Step 3 — Reload the preprocessed donor\nSet R’s working directory to this tutorial’s folder (Session &gt; Set Working Directory &gt; To Source File Location in RStudio) and reload the object from tutorial 02. It already carries logcounts, QC-filtered cells, the Subclass labels, and PCA/UMAP in reducedDims().\n\nlibrary(SingleCellExperiment)\nlibrary(scater)\n\nsce &lt;- readRDS(\"../../outputs/sce_preprocessed.rds\")\nsce\ntable(sce$Subclass)\n\nIf that file doesn’t exist, go back and run tutorial 02 through its final save step—this tutorial does not recompute it."
+  },
+  {
+    "objectID": "tutorials/03b-trajectory/index.html#step-4-subset-the-lineage",
+    "href": "tutorials/03b-trajectory/index.html#step-4-subset-the-lineage",
+    "title": "Ordering cells along a trajectory",
+    "section": "Step 4 — Subset the lineage",
+    "text": "Step 4 — Subset the lineage\nThe oligodendrocyte lineage is two Subclass labels: OPC (the precursors) and Oligodendrocyte (the mature cells). Keep only those.\n\nlineage &lt;- sce[, sce$Subclass %in% c(\"OPC\", \"Oligodendrocyte\")]\ntable(lineage$Subclass)\n\nYou should have a few thousand cells—many mature oligodendrocytes and a smaller pool of OPCs. That imbalance is expected: in cortex, most cells of this lineage have already matured.\n\n\n\n\n\n\nImportantWhy re-embed instead of reusing the global map?\n\n\n\nThe PCA and UMAP in sce were computed across all cell types. Their axes are dominated by the huge differences between neurons, astrocytes, oligodendrocytes, and so on—the coarse structure that separates cell types. That is exactly the wrong resolution for a trajectory, which lives in the fine variation within one lineage. So we recompute the embedding on just these cells, letting the axes capture OPC-to-oligodendrocyte variation instead. This is a general rule: a focused question needs a focused embedding."
+  },
+  {
+    "objectID": "tutorials/03b-trajectory/index.html#step-5-re-embed-the-lineage-on-its-own",
+    "href": "tutorials/03b-trajectory/index.html#step-5-re-embed-the-lineage-on-its-own",
+    "title": "Ordering cells along a trajectory",
+    "section": "Step 5 — Re-embed the lineage on its own",
+    "text": "Step 5 — Re-embed the lineage on its own\nRedo feature selection and dimensionality reduction—the same operations as tutorial 02, but now on the lineage subset so the axes describe this lineage’s variation. Set seeds so the embedding is reproducible.\n\nlibrary(scran)\n\n# Highly variable genes within the lineage (not the whole donor).\nset.seed(1)\ndec &lt;- modelGeneVar(lineage)\nhvg &lt;- getTopHVGs(dec, n = 2000)\n\n# PCA on those genes, then UMAP for visualization.\nset.seed(1)\nlineage &lt;- runPCA(lineage, subset_row = hvg, ncomponents = 30)\nset.seed(1)\nlineage &lt;- runUMAP(lineage, dimred = \"PCA\", n_dimred = 1:20)\n\nplotReducedDim(lineage, \"UMAP\", colour_by = \"Subclass\")\n\nOn the new UMAP the OPCs should sit apart from the oligodendrocytes, with the oligodendrocytes themselves spread out rather than collapsed to a point—that spread is the maturation variation the trajectory will order."
+  },
+  {
+    "objectID": "tutorials/03b-trajectory/index.html#step-6-cluster-the-lineage-and-choose-where-it-starts",
+    "href": "tutorials/03b-trajectory/index.html#step-6-cluster-the-lineage-and-choose-where-it-starts",
+    "title": "Ordering cells along a trajectory",
+    "section": "Step 6 — Cluster the lineage and choose where it starts",
+    "text": "Step 6 — Cluster the lineage and choose where it starts\nslingshot builds its path in two stages: it first connects clusters of cells with a minimum spanning tree to get the branching skeleton, then smooths a curve through them. So it needs cluster labels. We cluster on the PCA space (not the UMAP—UMAP distances are for looking, not computing).\n\nlibrary(bluster)\n\nset.seed(2)\nlineage$cluster &lt;- clusterCells(\n  lineage,\n  use.dimred = \"PCA\",\n  BLUSPARAM = NNGraphParam(k = 20, cluster.fun = \"louvain\")\n)\ntable(lineage$cluster, lineage$Subclass)\n\nThe cross-tabulation shows which clusters are OPCs and which are oligodendrocytes. Now the biological decision the algorithm can’t make for you: which cluster is the start? OPCs are the precursors, and they are marked by genes like PDGFRA (the canonical OPC marker), CSPG4, and PTPRZ1. Look at where those are expressed.\n\n# Mean expression of an OPC marker per cluster: the start cluster is the one\n# where it is high.\nround(tapply(logcounts(lineage)[\"PDGFRA\", ], lineage$cluster, mean), 2)\n\n\n\n\n\n\n\nTipYour decision: which end is the beginning\n\n\n\nWe pick the start cluster programmatically as the one with the highest mean PDGFRA, so the tutorial proceeds—but this is a scientific call, not a mechanical one. Confirm it with a second OPC marker (CSPG4, PTPRZ1) and a mature-oligodendrocyte marker (PLP1, MOBP, MOG) that should show the opposite pattern. If you cannot tell the two ends apart from markers, you cannot defend a direction—and the pseudotime you get is only an ordering, not a progression. Which genes convince you, and would they convince a skeptic?\n\nstart_cluster &lt;- names(which.max(\n  tapply(logcounts(lineage)[\"PDGFRA\", ], lineage$cluster, mean)\n))\nstart_cluster"
+  },
+  {
+    "objectID": "tutorials/03b-trajectory/index.html#step-7-fit-the-trajectory-with-slingshot",
+    "href": "tutorials/03b-trajectory/index.html#step-7-fit-the-trajectory-with-slingshot",
+    "title": "Ordering cells along a trajectory",
+    "section": "Step 7 — Fit the trajectory with slingshot",
+    "text": "Step 7 — Fit the trajectory with slingshot\nGive slingshot the cluster labels, the space to work in (PCA), and the start cluster. It returns the same object with the trajectory attached; slingPseudotime pulls out the per-cell ordering.\n\nlibrary(slingshot)\n\nset.seed(3)\nlineage &lt;- slingshot(\n  lineage,\n  clusterLabels = \"cluster\",\n  reducedDim = \"PCA\",\n  start.clus = start_cluster\n)\n\n# The lineage(s) slingshot found, as ordered sequences of clusters:\nslingLineages(SlingshotDataSet(lineage))\n\n# Store pseudotime as a per-cell column. With a single, unbranched lineage\n# there is one pseudotime vector.\nlineage$pseudotime &lt;- slingPseudotime(lineage)[, 1]\nsummary(lineage$pseudotime)\n\nFor this lineage you should get a single path from the OPC cluster through the oligodendrocyte clusters—no branches. If slingshot reports more than one lineage, it found a branch point (see the troubleshooting note at the end); for now we work with the first path.\n\n\n\n\n\n\nNoteWhy fit in PCA space but look in UMAP?\n\n\n\nWe fit the trajectory in PCA because those coordinates preserve real distances between cells; UMAP deliberately distorts distances to make a readable picture, so a curve fit there would chase the distortion. We visualize on UMAP in the next step because it is easier to read. Fit where the geometry is honest; look where it is legible."
+  },
+  {
+    "objectID": "tutorials/03b-trajectory/index.html#step-8-visualize-the-ordering",
+    "href": "tutorials/03b-trajectory/index.html#step-8-visualize-the-ordering",
+    "title": "Ordering cells along a trajectory",
+    "section": "Step 8 — Visualize the ordering",
+    "text": "Step 8 — Visualize the ordering\nColor the UMAP by pseudotime: it should run smoothly from the OPC end to the mature end.\n\nplotReducedDim(lineage, \"UMAP\", colour_by = \"pseudotime\")\n\nTo draw the fitted path itself on the UMAP, project the curve into that space with embedCurves and overlay it.\n\ncurve &lt;- slingCurves(embedCurves(lineage, \"UMAP\"))[[1]]\n\nplot(reducedDim(lineage, \"UMAP\"),\n     col = ifelse(lineage$Subclass == \"OPC\", \"orange\", \"grey70\"),\n     pch = 16, cex = 0.4, xlab = \"UMAP 1\", ylab = \"UMAP 2\")\nlines(curve, lwd = 3)\n\n\n\n\n\n\n\nWarningRead the gap honestly\n\n\n\nYou will likely see the OPCs sitting as an island, separated from the oligodendrocytes by a stretch with few cells, and the curve drawn straight across that gap. slingshot will always connect the clusters you gave it—it cannot know the gap is real. A sparse region like this can mean the intermediate cells are genuinely rare (this maturation step is fast), or that they were lost in dissociation or QC. The pseudotime values across the gap are interpolation, not observation. Note where your trajectory is supported by dense cells and where it is bridging empty space."
+  },
+  {
+    "objectID": "tutorials/03b-trajectory/index.html#step-9-which-genes-change-along-pseudotime",
+    "href": "tutorials/03b-trajectory/index.html#step-9-which-genes-change-along-pseudotime",
+    "title": "Ordering cells along a trajectory",
+    "section": "Step 9 — Which genes change along pseudotime?",
+    "text": "Step 9 — Which genes change along pseudotime?\nThe point of the ordering is the biology it exposes: genes whose expression rises or falls as cells progress. The quick, transparent way to find them is to correlate each gene’s expression with pseudotime across cells. A strong positive correlation means the gene switches on toward the mature end; a strong negative one means it switches off.\n\n# Work on the highly variable genes and cells with a defined pseudotime.\nok   &lt;- !is.na(lineage$pseudotime)\nexpr &lt;- as.matrix(logcounts(lineage)[hvg, ok])\npt   &lt;- lineage$pseudotime[ok]\n\n# Spearman correlation is rank-based, so it catches monotone rise/fall without\n# assuming the change is linear.\ncors &lt;- apply(expr, 1, function(g) cor(g, pt, method = \"spearman\"))\ncors &lt;- sort(cors[is.finite(cors)])\n\n# Genes that fall along the trajectory (high early, in OPCs):\nhead(cors, 15)\n\n# Genes that rise along the trajectory (high late, in mature oligodendrocytes):\ntail(cors, 15)\n\nRead the two lists as biology. The genes that fall should be OPC identity genes (PDGFRA, CSPG4, PTPRZ1, VCAN); the genes that rise should include the myelin program—PLP1, MOBP, MBP, MOG, OPALIN—the proteins a maturing oligodendrocyte makes to wrap axons. If that is what you see, the ordering is tracking real maturation biology, not noise.\n\n# Check specific markers directly, rather than trusting the top of a list.\n# Correlate straight from the full matrix so this works for any marker, not\n# only the 2000 HVGs the discovery lists above were restricted to.\nmarkers &lt;- c(\"PDGFRA\", \"CSPG4\", \"PTPRZ1\", \"MOBP\", \"PLP1\", \"MBP\", \"MOG\", \"OPALIN\")\nsapply(markers, function(g) cor(logcounts(lineage)[g, ok], pt, method = \"spearman\"))\n\nPlot a couple of them against pseudotime to see the switch, not just its correlation.\n\ndf &lt;- data.frame(\n  pseudotime = lineage$pseudotime,\n  PDGFRA = logcounts(lineage)[\"PDGFRA\", ],\n  PLP1   = logcounts(lineage)[\"PLP1\", ]\n)\n\nggplot2::ggplot(df, ggplot2::aes(pseudotime, PDGFRA)) +\n  ggplot2::geom_point(alpha = 0.2) +\n  ggplot2::geom_smooth() +\n  ggplot2::ggtitle(\"PDGFRA (OPC marker) falls along pseudotime\")\n\nggplot2::ggplot(df, ggplot2::aes(pseudotime, PLP1)) +\n  ggplot2::geom_point(alpha = 0.2) +\n  ggplot2::geom_smooth() +\n  ggplot2::ggtitle(\"PLP1 (myelin) rises along pseudotime\")\n\n\n\n\n\n\n\nNoteCorrelations here are modest, and that’s honest\n\n\n\nDon’t expect correlations near 1. Most oligodendrocytes are already mature, so the big transcriptional jump is the OPC-to-oligodendrocyte switch at the start; across the mature cells expression is comparatively flat. A correlation of ~0.4–0.5 for a real marker is a genuine, interpretable signal at this scale, not a weak result. The ranked pattern—OPC genes at one end, myelin genes at the other—is the thing to trust."
+  },
+  {
+    "objectID": "tutorials/03b-trajectory/index.html#step-10-save-the-trajectory",
+    "href": "tutorials/03b-trajectory/index.html#step-10-save-the-trajectory",
+    "title": "Ordering cells along a trajectory",
+    "section": "Step 10 — Save the trajectory",
+    "text": "Step 10 — Save the trajectory\nSave the lineage object with its pseudotime so you can reload it without recomputing. outputs/ is git-ignored.\n\nsaveRDS(lineage, \"../../outputs/trajectory_oligo_H20.33.001.rds\")"
+  },
+  {
+    "objectID": "tutorials/03b-trajectory/index.html#sec-frontier",
+    "href": "tutorials/03b-trajectory/index.html#sec-frontier",
+    "title": "Ordering cells along a trajectory",
+    "section": "Step 11 — Your frontier",
+    "text": "Step 11 — Your frontier\nYou now have a working trajectory. Everything above was scaffolding; the open questions below are where the real analysis is—and several have no tidy answer.\n\n\n\n\n\n\nTipRequired — stress-test the trajectory you built\n\n\n\nA trajectory method always returns a trajectory. Your job is to decide whether to believe this one.\n\nDefend the direction. You chose the OPC end as the start from PDGFRA. Build the full marker case: list the genes that convince you OPCs come first and mature oligodendrocytes come later, and say what you’d expect to see if you were wrong.\nProbe the choices. Re-run from Step 5 changing one thing at a time—the number of PCs (n_dimred), the clustering resolution (k in NNGraphParam), the HVG count. Does the ordering of markers along pseudotime survive, or does the story change with the knobs? A result that only appears at one setting is not a result.\nInterrogate the gap. Look again at the sparse region the curve bridges (Step 8). Is the maturation continuum really sampled, or is slingshot drawing a line between two disconnected clouds? What would you need to see to call this a genuine continuum?\n\n\n\n\n\n\n\n\n\nTipOptional / advanced — does maturation shift with pathology?\n\n\n\nThis is the question the SEA-AD data is really for, and it is genuinely open. Oligodendrocyte and myelin loss is reported in Alzheimer’s disease—so does the maturation trajectory itself differ between low- and high-pathology donors? Are proportionally fewer cells at the mature end? Does the myelin program turn on at a different point?\nThis is a scale-up, exactly parallel to the pseudobulk track’s cohort step (03a, Step 8). Our single donor is one pathology grade (H20.33.001 is ADNC Low), so within this notebook there is nothing to compare against. To go further you would:\n\nrun tutorials 01–02 and this lineage subset for several donors spanning the ADNC range (you choose the cohort and its confounder balance, as in 03a);\nfit a trajectory per donor—or integrate donors and fit one shared trajectory, which raises its own batch-correction questions;\ncompare the distribution of pseudotime (or the position where myelin genes switch on) across pathology groups.\n\nThere is no guarantee of a difference, and a null result is a real finding. This is a research question, not an exercise with an answer key.\n\n\n\n\n\n\n\n\nNoteOptional — a principled gene test with tradeSeq\n\n\n\nThe Spearman correlation in Step 9 is a fast first pass. The purpose-built tool, tradeSeq, fits a smooth (generalized additive) model of counts along pseudotime per gene and tests for significant change, which also handles non-monotone patterns and branches. It is heavier to run; reach for it once you trust the trajectory and want statistics on the gene dynamics."
+  },
+  {
+    "objectID": "tutorials/03b-trajectory/index.html#what-you-produced",
+    "href": "tutorials/03b-trajectory/index.html#what-you-produced",
+    "title": "Ordering cells along a trajectory",
+    "section": "What you produced",
+    "text": "What you produced\n\nA lineage object (OPCs + oligodendrocytes from H20.33.001), re-embedded on its own, carrying a pseudotime per cell, saved to outputs/.\nA ranked list of genes that vary along the ordering, with OPC identity genes at one end and the myelin program at the other.\nA judgment about which parts of that trajectory are supported by data and which are the method interpolating across gaps."
+  },
+  {
+    "objectID": "tutorials/03b-trajectory/index.html#where-this-connects",
+    "href": "tutorials/03b-trajectory/index.html#where-this-connects",
+    "title": "Ordering cells along a trajectory",
+    "section": "Where this connects",
+    "text": "Where this connects\n\nThe pseudobulk track and its differential expression sequel treat the donor as the unit and compare groups. This track treats the cell as the unit and orders a continuum. Same data, two fundamentally different questions—knowing which one your biology calls for is the point.\nBoth tracks start from the shared preprocessed object built in tutorial 02."
+  },
+  {
+    "objectID": "tutorials/03b-trajectory/index.html#if-something-breaks",
+    "href": "tutorials/03b-trajectory/index.html#if-something-breaks",
+    "title": "Ordering cells along a trajectory",
+    "section": "If something breaks",
+    "text": "If something breaks\n\n\n\n\n\n\nWarningreadRDS can’t find sce_preprocessed.rds\n\n\n\nThis tutorial reuses tutorial 02’s output. Run tutorial 02 through its final save step first; the object is written to the repo-level outputs/ folder, reached from here as ../../outputs/sce_preprocessed.rds.\n\n\n\n\n\n\n\n\nWarningslingshot reports more than one lineage\n\n\n\nMore than one entry from slingLineages means it placed a branch point—your clustering split the mature end into paths it couldn’t merge. Lower the clustering resolution (raise k in NNGraphParam to get fewer, coarser clusters) so the oligodendrocytes stay one group, then refit. There is one pseudotime column per lineage; slingPseudotime(lineage) shows them all.\n\n\n\n\n\n\n\n\nWarningThe start cluster looks wrong (markers disagree)\n\n\n\nIf PDGFRA is not clearly highest in one cluster, your clusters may be too fine or too coarse to isolate the OPCs. Check table(lineage$cluster, lineage$Subclass): you want a cluster that is mostly OPC. Adjust k until one cluster captures the OPCs, then set start.clus to it.\n\n\n\n\n\n\n\n\nWarningembedCurves or plotting fails\n\n\n\nembedCurves needs the target reduced dimension to exist—confirm reducedDimNames(lineage) still lists \"UMAP\". If you only need the ordering and not the drawn curve, skip this; the pseudotime column is already attached from Step 7."
+  },
+  {
     "objectID": "tutorials/02-preprocessing/index.html",
     "href": "tutorials/02-preprocessing/index.html",
     "title": "Preprocessing single-cell data",
@@ -284,7 +396,7 @@
     "href": "tutorials/02-preprocessing/index.html#where-this-goes-next",
     "title": "Preprocessing single-cell data",
     "section": "Where this goes next",
-    "text": "Where this goes next\nWith a clean, normalized object in hand, the project tracks diverge:\n\nPseudobulk track: repeat loading across donors, aggregate counts per donor × cell type, and run a donor-level differential expression comparison across AD pathology.\nTrajectory track: subset one cell type, reuse the PCA/UMAP you just computed, and fit a slingshot trajectory anchored in low-pathology cells."
+    "text": "Where this goes next\nWith a clean, normalized object in hand, the project tracks diverge:\n\nPseudobulk track: repeat loading across donors, aggregate counts per donor × cell type, and run a donor-level differential expression comparison across AD pathology.\nTrajectory track (03b): subset one lineage, re-embed it on its own, and fit a slingshot pseudotime ordering the cells from precursor to mature state."
   },
   {
     "objectID": "tutorials/02-preprocessing/index.html#if-something-breaks",
