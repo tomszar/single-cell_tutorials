@@ -469,8 +469,9 @@ With a clean, normalized object in hand, the project tracks diverge:
 - **Pseudobulk track:** repeat loading across donors, aggregate counts per
   donor × cell type, and run a donor-level differential expression comparison
   across AD pathology.
-- **Trajectory track:** subset one cell type, reuse the PCA/UMAP you just
-  computed, and fit a `slingshot` trajectory anchored in low-pathology cells.
+- **Trajectory track** ([03b](../03b-trajectory/index.qmd)): subset one lineage,
+  re-embed it on its own, and fit a `slingshot` pseudotime ordering the cells from
+  precursor to mature state.
 
 ## If something breaks
 

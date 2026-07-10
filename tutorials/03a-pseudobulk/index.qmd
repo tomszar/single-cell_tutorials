@@ -299,7 +299,7 @@ get an empirical feel for that in tutorial 04.
 - [Tutorial 04 — pseudobulk differential expression](../04-pseudobulk-de/index.qmd)
   takes the stacked cohort matrix and tests, within one cell type, which genes
   change between low- and high-pathology donors.
-- The other analysis track, [trajectory](../02-preprocessing/index.qmd), asks a
+- The other analysis track, [trajectory](../03b-trajectory/index.qmd), asks a
   different question of the same data—*ordering* cells along a continuous process
   rather than *comparing* groups of donors. Pseudobulk's unit is the donor;
   trajectory's is the individual cell.

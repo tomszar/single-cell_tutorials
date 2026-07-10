@@ -11,3 +11,4 @@ data.
 - [Tutorial 01: Read an H5AD file](tutorials/01-read-h5ad/index.qmd)
 - [Tutorial 02: Preprocessing](tutorials/02-preprocessing/index.qmd)
 - [Tutorial 03a: Building pseudobulk profiles](tutorials/03a-pseudobulk/index.qmd)
+- [Tutorial 03b: Ordering cells along a trajectory](tutorials/03b-trajectory/index.qmd)

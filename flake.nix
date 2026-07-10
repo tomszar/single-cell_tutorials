@@ -45,6 +45,14 @@
           scran
           scater
           uwot
+          # Tutorial 03b trajectory: fit a principal-curve pseudotime through
+          # a lineage (bluster backs the graph clustering slingshot needs a
+          # start cluster from).
+          slingshot
+          # slingshot Imports DelayedMatrixStats; BiocManager pulls it in
+          # automatically for students, but Nix needs it listed explicitly.
+          DelayedMatrixStats
+          bluster
           # Tutorial 04 pseudobulk differential expression: count-based DE
           # (edgeR pulls in limma, but list it too for clarity). Tutorial 03a
           # only generates pseudobulk and does not need these.

@@ -15,6 +15,8 @@ website:
         text: "02: Preprocessing"
       - href: tutorials/03a-pseudobulk/index.qmd
         text: "03a: Pseudobulk generation"
+      - href: tutorials/03b-trajectory/index.qmd
+        text: "03b: Trajectory"
 
 format:
   html:
