@@ -125,13 +125,17 @@ table(cd$Supertype)    # fine-grained types
 table(cd$Sex)
 table(cd$`Overall AD neuropathological Change`)
 
-# Continuous pathology axis: confirm its exact name, then inspect it
+# Pathology staging variables: find them, then inspect their levels. In these
+# per-donor files these are all *ordinal stages* (not a continuous number).
 grep(
-  "pseudo|neuropath",
+  "Braak|Thal|CERAD|CAA|neuropath",
   colnames(cd),
   value = TRUE,
   ignore.case = TRUE
 )
+table(cd$Braak)          # e.g. Braak IV
+table(cd$Thal)           # e.g. Thal 2
+table(cd$`CERAD score`)  # e.g. Sparse
 ```
 
 Two things to notice:
@@ -140,9 +144,28 @@ Two things to notice:
    `Overall AD neuropathological Change`. Copy the capitalization exactly as
    `colnames(colData(sce))` prints it—here the "n" in "neuropathological" is
    lowercase.
-2. Because this is a single donor, `Sex` and the pathology score are the same
+2. Because this is a single donor, `Sex` and the pathology stages are the same
    for every cell. The differences you care about appear only when you compare
    donors, which is the next step in both tracks.
+
+::: {.callout-note title="Want a continuous pathology score?"}
+These per-donor files carry only the *ordinal* pathology stages above. SEA-AD
+also defines a **Continuous Pseudo-progression Score (CPS)**—a continuous 0–1
+axis of disease severity—but it is not stored in these files. It lives in the
+combined atlas object and in the supplementary data of the original paper
+([Gabitto et al., *Nat Neurosci* 2024](https://www.nature.com/articles/s41593-024-01774-5)).
+Download the per-donor CPS table here—a simple sheet with two columns, `Donor ID`
+and `CPS`:
+[sea-ad_global_and_local_cps.xlsx](https://cdn.prod.website-files.com/689cfbd308fa7373b604d290/6a457afa3e9ab7e81cabccb1_sea-ad_global_and_local_cps_050126.xlsx).
+Join it to your cells by `Donor ID`:
+
+```r
+library(readxl)
+cps <- read_excel("../../data/sea-ad/sea-ad_global_and_local_cps.xlsx")
+# match(): pull each cell's donor CPS out of the lookup table
+cd$CPS <- cps$CPS[match(cd$`Donor ID`, cps$`Donor ID`)]
+```
+:::
 
 ::: {.callout-important title="Your deliverable: a variable dictionary"}
 As you explore, keep a running **variable dictionary**—your own notes on the
@@ -151,8 +174,9 @@ and whether it describes a single *cell* or the whole *donor*. This is your
 artifact, not a graded worksheet, and you will lean on it constantly: the
 grouping variables, confounders, and contrasts you choose in later tutorials all
 come from here. Start it now with the columns above—`Subclass`, `Supertype`,
-`Sex`, `Overall AD neuropathological Change`, and the continuous pathology
-score—and add to it whenever you meet a new column. Nobody hands you the "right"
+`Sex`, `Overall AD neuropathological Change`, and the other ordinal staging
+scores (`Braak`, `Thal`, `CERAD score`)—and add to it whenever you meet a new
+column. Nobody hands you the "right"
 set of variables; deciding which ones matter for your question is the first piece
 of the analysis that is genuinely yours.
 :::
