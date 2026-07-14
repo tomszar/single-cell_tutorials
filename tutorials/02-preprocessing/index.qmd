@@ -253,9 +253,11 @@ plotColData(sce, x = "sum", y = "subsets_Mito_percent", colour_by = "discard") +
 
 The adaptive rule is a *starting point*, not the answer. Before you accept it,
 set a fixed rule of your own and see where the two disagree. Pick cutoffs you can
-say out loud—"fewer than 500 counts, fewer than 300 genes, or more than 10%
+defend—"fewer than 500 counts, fewer than 300 genes, or more than 10%
 mitochondrial"—and compare them against the adaptive verdict on the *same,
-still-unfiltered* cells:
+still-unfiltered* cells. To justify your choices, look at what previous studies
+did and the reasoning they gave; a good place to start is the SEA-AD paper
+referenced in tutorial 01 ([Gabitto et al., *Nat Neurosci* 2024](https://www.nature.com/articles/s41593-024-01774-5)).
 
 ```{r}
 # Your fixed rule—change these numbers and re-run.
