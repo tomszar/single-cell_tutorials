@@ -251,7 +251,11 @@ analysis choices you'll make later begin:
 There isn't one right answer here—the point is to start reasoning about this as
 *your* dataset rather than a fixed recipe.
 
-From here, the project tracks diverge:
+Next comes [tutorial 02: Preprocessing](../02-preprocessing/index.qmd), the
+shared foundation for everything that follows. There you'll take this same
+donor's raw counts through quality control, normalization, feature selection,
+and dimensionality reduction to produce an analysis-ready object. Both project
+tracks start from that object:
 
 - **Pseudobulk analysis:** repeat this loading process over donors, then
   perform per-donor pseudobulk aggregation.
