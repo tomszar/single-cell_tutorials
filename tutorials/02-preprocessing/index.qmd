@@ -16,7 +16,7 @@ In [tutorial 01](../01-read-h5ad/index.qmd) you loaded one SEA-AD donor into a
 score live. Quality control and normalization both start from **raw counts**: the number of
 times each gene was detected in each nucleus, straight from the sequencer. Raw
 counts are not yet something you can compare cell to cell, because they are
-dominated by technical noise—some droplets captured more RNA than others, some
+dominated by technical noise: some droplets captured more RNA than others, some
 are empty or damaged, and a handful of highly expressed genes drown out the
 rest. SEA-AD's files actually ship *two* versions of the matrix: a convenience
 copy that is already normalized, and the raw counts stored alongside it. Step 2
@@ -26,7 +26,7 @@ Preprocessing is the step that turns raw counts into an object you can actually
 analyze. By the end you will have thrown out low-quality nuclei, put the
 remaining cells on a common scale, picked the genes that carry biological
 signal, and compressed the data down to a two-dimensional map you can look at.
-Both project tracks—pseudobulk and trajectory—start from this object, so this
+Both project tracks (pseudobulk and trajectory) start from this object, so this
 tutorial is the shared foundation for everything that follows.
 
 We stay on the single donor from tutorial 01 (`H20.33.001`) so the whole thing
@@ -42,8 +42,8 @@ By the end of this tutorial you should be able to:
   reads) and interpret their distributions.
 - Filter low-quality cells with thresholds you can *defend*, and explain the
   difference between fixed and adaptive (MAD-based) cutoffs.
-- Normalize counts—both the quick log-normalization and the more principled
-  `scran` pooling approach—and say what each one corrects for.
+- Normalize counts, both the quick log-normalization and the more principled
+  `scran` pooling approach, and say what each one corrects for.
 - Select highly variable genes and explain why we don't just use all of them.
 - Reduce dimensionality with PCA and then UMAP, set a seed, and read the
   resulting embedding.
@@ -54,7 +54,7 @@ This tutorial reuses that same file.
 
 **Expected outcome:** a filtered, normalized `SingleCellExperiment` carrying a
 `logcounts` assay, a stored set of highly variable genes, and `PCA` and `UMAP`
-entries in `reducedDims()`—ready for either analysis track.
+entries in `reducedDims()`, ready for either analysis track.
 
 ## Step 1 — Install the R packages
 
@@ -63,10 +63,10 @@ tools all come from Bioconductor and belong to the [`scran`/`scater`
 ecosystem](https://bioconductor.org/books/release/OSCA/) built specifically for
 single-cell work:
 
-- **`scuttle`** — QC metrics and normalization helpers.
-- **`scran`** — pooling-based size factors and variance modeling for feature
+- **`scuttle`**: QC metrics and normalization helpers.
+- **`scran`**: pooling-based size factors and variance modeling for feature
   selection.
-- **`scater`** — PCA/UMAP wrappers and plotting.
+- **`scater`**: PCA/UMAP wrappers and plotting.
 
 ```{r}
 if (!requireNamespace("BiocManager", quietly = TRUE)) {
@@ -76,12 +76,12 @@ BiocManager::install(c("scuttle", "scran", "scater", "uwot"))
 ```
 
 `uwot` is the package that actually computes the UMAP; `scater` calls it for
-us. If you are on the Nix dev shell, all of these are already built—you do not
-need to run `install.packages`.
+us. If you are on the Nix dev shell, all of these are already built, so you do
+not need to run `install.packages`.
 
 ::: {.callout-note title="Expect deprecation warnings"}
 This tutorial uses the `scran`/`scater`/`scuttle` functions taught in the
-[OSCA book](https://bioconductor.org/books/release/OSCA/)—the standard learning
+[OSCA book](https://bioconductor.org/books/release/OSCA/), the standard learning
 path for single-cell analysis in R. On very recent Bioconductor releases some of
 these functions print a deprecation notice pointing to the newer `scrapper`
 package. They still work exactly as described here, and the warnings are safe to
@@ -105,7 +105,7 @@ sce
 ```
 
 `schard` loads the file's main matrix, `X`. For SEA-AD that matrix is **not raw
-counts**—it is a log-normalized copy the authors precomputed for convenience.
+counts**: it is a log-normalized copy the authors precomputed for convenience.
 You can see this: the values are fractional and small, not the whole numbers a
 count matrix would have.
 
@@ -133,7 +133,7 @@ counts(sce)[1:5, 1:5]
 
 ::: {.callout-note title="Why not just use the normalized `X`?"}
 The point of this tutorial is to do QC and normalization yourself, with choices
-you can see and defend—starting from someone else's normalized matrix would skip
+you can see and defend. Starting from someone else's normalized matrix would skip
 exactly the steps you are here to learn. You also *can't* do count-based QC
 (library size, mitochondrial fraction) on values that are no longer counts.
 Different datasets hide their raw counts in different places (a `layers/` entry,
@@ -180,7 +180,7 @@ sum(is_mito)                 # 13 — the mitochondrial protein-coding genes
 ```
 
 ::: {.callout-tip title="Sanity check"}
-If `sum(is_mito)` is `0`, you matched the wrong identifiers—the symbols are
+If `sum(is_mito)` is `0`, you matched the wrong identifiers; the symbols are
 somewhere other than where you looked. If it is in the hundreds, you probably
 matched Ensembl IDs by accident. The human mitochondrial genome encodes 13
 protein-coding genes, so a count of 13 is what you want here.
@@ -218,11 +218,11 @@ plotColData(sce, y = "subsets_Mito_percent") +
 
 There are two ways to pick cutoffs:
 
-- **Fixed thresholds** — e.g. "drop cells with fewer than 500 genes or more
+- **Fixed thresholds**: e.g. "drop cells with fewer than 500 genes or more
   than 10% mito reads." Simple and transparent, but the right number depends on
   the tissue, the protocol, and sequencing depth. A cutoff that is sensible for
   blood may throw away perfectly good neurons.
-- **Adaptive thresholds** — flag cells that are outliers *relative to this
+- **Adaptive thresholds**: flag cells that are outliers *relative to this
   dataset*. The standard approach uses the **median absolute deviation (MAD)**:
   a cell is an outlier if it sits more than a few MADs from the median. This
   adapts to whatever the data's own scale is, which is why it is the OSCA
@@ -230,7 +230,7 @@ There are two ways to pick cutoffs:
 
 We'll *start* with the adaptive approach via `perCellQCFilters`, which flags
 cells that are outliers on *low* library size, *low* genes detected, or *high*
-mito fraction—the three directions that indicate poor quality. It works on the
+mito fraction, the three directions that indicate poor quality. It works on the
 log scale for size and complexity (counts are right-skewed) and flags high-mito
 cells in the upper tail.
 
@@ -253,8 +253,8 @@ plotColData(sce, x = "sum", y = "subsets_Mito_percent", colour_by = "discard") +
 
 The adaptive rule is a *starting point*, not the answer. Before you accept it,
 set a fixed rule of your own and see where the two disagree. Pick cutoffs you can
-defend—"fewer than 500 counts, fewer than 300 genes, or more than 10%
-mitochondrial"—and compare them against the adaptive verdict on the *same,
+defend ("fewer than 500 counts, fewer than 300 genes, or more than 10%
+mitochondrial") and compare them against the adaptive verdict on the *same,
 still-unfiltered* cells. To justify your choices, look at what previous studies
 did and the reasoning they gave; a good place to start is the SEA-AD paper
 referenced in tutorial 01 ([Gabitto et al., *Nat Neurosci* 2024](https://www.nature.com/articles/s41593-024-01774-5)).
@@ -269,11 +269,11 @@ fixed_discard <- sce$sum < 500 |
 table(adaptive = sce$discard, fixed = fixed_discard)
 ```
 
-Look at the off-diagonal counts—the cells only *one* rule drops—and ask why. A
-cell the adaptive rule keeps but your fixed rule cuts might be a genuinely small
-but healthy cell type; a cell your fixed rule keeps but the adaptive rule cuts
-might be a high-mito straggler. There is no universally correct cutoff—the right
-one depends on this tissue, protocol, and sequencing depth—so your job is to
+Look at the off-diagonal counts, the cells only *one* rule drops, and ask why. A
+cell the adaptive rule keeps but your fixed rule cuts might be a small but
+healthy cell type; a cell your fixed rule keeps but the adaptive rule cuts
+might be a high-mito straggler. There is no universally correct cutoff: the right
+one depends on this tissue, protocol, and sequencing depth. Your job is to
 choose a rule you can *defend*, not to match an answer key.
 
 ```{r}
@@ -333,7 +333,7 @@ heterogeneous. We keep its `logcounts` for the rest of the tutorial.
 Most of the ~36,000 genes are either off or uniformly expressed and carry no
 information about how cells differ. Feeding all of them into PCA just adds
 noise. **Highly variable genes (HVGs)** are the genes whose variance across
-cells exceeds what we'd expect from technical noise alone—those are where the
+cells exceeds what we'd expect from technical noise alone; those are where the
 biological signal is.
 
 `modelGeneVar` decomposes each gene's variance into a technical trend (variance
@@ -372,7 +372,7 @@ Swap `hvg_1000` or `hvg_5000` into `runPCA(..., subset_row = ...)` and look at
 the UMAP: too few genes and you drop real structure, so distinct cell types start
 to merge; too many and technical noise creeps back in and blurs the clusters.
 Which cutoff gives the cleanest separation of the `Subclass` labels for *this*
-donor? Note your choice and your reasoning—there isn't a single right value.
+donor? Note your choice and your reasoning; there isn't a single right value.
 :::
 
 ## Step 7 — Reduce dimensionality
@@ -384,7 +384,7 @@ reductions get us to something interpretable:
    principal components capture the dominant structure while filtering noise;
    downstream steps run on these instead of raw genes.
 2. **UMAP** takes those PCs and lays them out in 2D for visualization. UMAP is
-   for *looking*, not for quantitative claims—distances between far-apart
+   for *looking*, not for quantitative claims: distances between far-apart
    clusters are not meaningful.
 
 Both are randomized, so set a seed before each for reproducibility.
@@ -401,7 +401,7 @@ plot(pct_var, xlab = "PC", ylab = "% variance explained", type = "b")
 ### Your decision: how many PCs to keep
 
 The scree plot is there for a real choice, not decoration. Downstream steps don't
-need all 50 PCs—only the ones carrying structure, before the curve flattens into
+need all 50 PCs, only the ones carrying structure, before the curve flattens into
 noise. Read the elbow off the plot above and keep that many:
 
 ```{r}
@@ -427,7 +427,7 @@ plotReducedDim(sce, "UMAP", colour_by = "Subclass")
 ::: {.callout-tip title="Read the map critically"}
 Distinct, well-separated islands that match known cell types are a good sign.
 If everything is one blob, or if the clusters line up with library size instead
-of biology, revisit your QC and normalization—those are the usual culprits. Try
+of biology, revisit your QC and normalization; those are the usual culprits. Try
 coloring by `sum` or `subsets_Mito_percent` to check that technical variation
 isn't driving the layout.
 :::
@@ -436,7 +436,7 @@ isn't driving the layout.
 
 Both tracks start here, so save the result. The repo keeps generated analysis
 outputs in the top-level `outputs/` folder, which `.gitignore` already excludes
-from version control—so the object won't get committed by accident.
+from version control, so the object won't get committed by accident.
 
 ```{r}
 saveRDS(sce, "../../outputs/sce_preprocessed.rds")
@@ -455,7 +455,7 @@ Your `sce` now carries everything the downstream tracks need:
 - `PCA` and `UMAP` in `reducedDims(sce)`.
 
 ::: {.callout-important title="Your choices are part of the result"}
-You made real decisions in this tutorial—which cells to cut, how many genes to
+You made real decisions in this tutorial: which cells to cut, how many genes to
 keep, how many PCs to trust. None had a single correct answer, and a classmate
 who chose differently will end up with a slightly different object. That is
 normal in single-cell analysis, not a mistake to hide. Before moving on, look

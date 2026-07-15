@@ -10,7 +10,7 @@ execute:
 ---
 
 This tutorial gets your computer ready for the rest of the series. There is
-no biology or single-cell data here — just installing the tools and
+no biology or single-cell data here, just installing the tools and
 confirming, interactively, that they work together. By the end you will have
 R, RStudio, Quarto, and Git installed, this repository cloned to your
 computer, a handful of commonly used R packages available, and you will have
@@ -32,7 +32,7 @@ Do this once, before Tutorial 01.
 
 You need administrator rights on your computer (to install software), an
 internet connection, and about 15–20 minutes. Instructions are given for
-Windows and macOS separately — follow the column for your operating system.
+Windows and macOS separately; follow the column for your operating system.
 
 ## Step 1 — Install R
 
@@ -145,7 +145,7 @@ Now clone the repository using RStudio's built-in Git integration:
    **Create Project**.
 
 RStudio will download the repository and reopen itself with the project
-loaded — you'll see the tutorial folders (`tutorials/00-setup`,
+loaded, and you'll see the tutorial folders (`tutorials/00-setup`,
 `tutorials/01-read-h5ad`, ...) in the **Files** pane.
 
 ::: {.callout-note title="Just want to read the tutorials first?"}
@@ -176,7 +176,7 @@ install.packages(c("tidyverse", "BiocManager"))
 
 This step downloads and compiles packages, so it can take a few minutes the
 first time. Package-specific requirements for each tutorial (e.g. `schard`,
-`SingleCellExperiment`) are installed separately within that tutorial — this
+`SingleCellExperiment`) are installed separately within that tutorial; this
 step only covers what's shared by all of them.
 
 ::: {.callout-warning title="Installation fails with a compilation error"}
@@ -216,7 +216,7 @@ ggplot(mtcars, aes(x = wt, y = mpg)) +
 If it worked, a table summary appears first, followed by a scatter plot,
 both shown inline underneath the chunk (not in a separate window). That
 inline, run-as-you-go behavior is what every later tutorial relies on:
-you'll run one chunk, look at the result, then decide what to do next —
+you'll run one chunk, look at the result, then decide what to do next,
 rather than running a whole script at once.
 
 ## If something breaks
@@ -234,7 +234,7 @@ page](https://quarto.org/docs/get-started/), then restart RStudio.
 
 ::: {.callout-warning title="The chunk runs but no plot appears"}
 Confirm the chunk actually loaded `tidyverse` without an error above the
-plot — scroll up and check for a red error message. If `tidyverse` failed to
+plot; scroll up and check for a red error message. If `tidyverse` failed to
 install in Step 5, reinstall it and re-run the chunk.
 :::
 
