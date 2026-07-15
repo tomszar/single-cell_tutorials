@@ -19,7 +19,7 @@ Everything after the download stays in R.
 
 SEA-AD ships its data as `.h5ad`, a format from the Python world. We read it
 straight into R with [`schard`](https://github.com/cellgeni/schard), which is
-pure R—no Python environment is required—and returns a
+pure R (no Python environment is required) and returns a
 `SingleCellExperiment`, the standard Bioconductor object used by both
 downstream pipelines.
 
@@ -47,8 +47,8 @@ if (!requireNamespace("remotes", quietly = TRUE)) {
 remotes::install_github("cellgeni/schard")
 ```
 
-If `schard` reports an installation error, install `rhdf5` on its own first—it
-is the component that reads the HDF5 file—and then try installing `schard`
+If `schard` reports an installation error, install `rhdf5` on its own first (it
+is the component that reads the HDF5 file), then try installing `schard`
 again.
 
 ## Step 2 — Download one donor's file in a web browser
@@ -142,7 +142,7 @@ Two things to notice:
 
 1. Column names with spaces need backticks, as with
    `Overall AD neuropathological Change`. Copy the capitalization exactly as
-   `colnames(colData(sce))` prints it—here the "n" in "neuropathological" is
+   `colnames(colData(sce))` prints it; here the "n" in "neuropathological" is
    lowercase.
 2. Because this is a single donor, `Sex` and the pathology stages are the same
    for every cell. The differences you care about appear only when you compare
@@ -150,11 +150,11 @@ Two things to notice:
 
 ::: {.callout-note title="Want a continuous pathology score?"}
 These per-donor files carry only the *ordinal* pathology stages above. SEA-AD
-also defines a **Continuous Pseudo-progression Score (CPS)**—a continuous 0–1
-axis of disease severity—but it is not stored in these files. It lives in the
+also defines a **Continuous Pseudo-progression Score (CPS)**, a continuous 0–1
+axis of disease severity, but it is not stored in these files. It lives in the
 combined atlas object and in the supplementary data of the original paper
 ([Gabitto et al., *Nat Neurosci* 2024](https://www.nature.com/articles/s41593-024-01774-5)).
-Download the per-donor CPS table here—a simple sheet with two columns, `Donor ID`
+Download the per-donor CPS table here, a simple sheet with two columns, `Donor ID`
 and `CPS`:
 [sea-ad_global_and_local_cps.xlsx](https://cdn.prod.website-files.com/689cfbd308fa7373b604d290/6a457afa3e9ab7e81cabccb1_sea-ad_global_and_local_cps_050126.xlsx).
 Join it to your cells by `Donor ID`:
@@ -168,17 +168,17 @@ cd$CPS <- cps$CPS[match(cd$`Donor ID`, cps$`Donor ID`)]
 :::
 
 ::: {.callout-important title="Your deliverable: a variable dictionary"}
-As you explore, keep a running **variable dictionary**—your own notes on the
-`colData` columns: what each one means, whether it is categorical or continuous,
+As you explore, keep a running **variable dictionary**: your own notes on the
+`colData` columns, what each one means, whether it is categorical or continuous,
 and whether it describes a single *cell* or the whole *donor*. This is your
 artifact, not a graded worksheet, and you will lean on it constantly: the
 grouping variables, confounders, and contrasts you choose in later tutorials all
-come from here. Start it now with the columns above—`Subclass`, `Supertype`,
+come from here. Start it now with the columns above (`Subclass`, `Supertype`,
 `Sex`, `Overall AD neuropathological Change`, and the other ordinal staging
-scores (`Braak`, `Thal`, `CERAD score`)—and add to it whenever you meet a new
+scores `Braak`, `Thal`, `CERAD score`), and add to it whenever you meet a new
 column. Nobody hands you the "right"
 set of variables; deciding which ones matter for your question is the first piece
-of the analysis that is genuinely yours.
+of the analysis that is yours.
 :::
 
 ## Step 5 — Subset to one cell type
@@ -191,8 +191,8 @@ astro <- sce[, sce$Subclass == "Astrocyte"]
 dim(astro)
 ```
 
-Microglia—the brain's resident immune cells and a focus of Alzheimer's
-research—are worth finding too. In this taxonomy they are not their own
+Microglia, the brain's resident immune cells and a focus of Alzheimer's
+research, are worth finding too. In this taxonomy they are not their own
 `Subclass`; they sit inside the broader `Immune` subclass, with `Supertype`
 labels beginning `Micro-PVM`. You can select them either way:
 
@@ -237,18 +237,18 @@ spaces and capitalization.
 You now have a `SingleCellExperiment` for one donor and know where sex,
 pathology, and cell type live in it.
 
-Before you move on, spend a few minutes exploring on your own—this is where the
+Before you move on, spend a few minutes exploring on your own. This is where the
 analysis choices you'll make later begin:
 
 - Browse the full metadata with `colnames(colData(sce))` and a few `table()` or
   `summary()` calls. Which variables would you use to compare *cells* within this
   donor? Which only make sense when comparing *donors*?
-- Which columns look like they could be **confounders**—things that might track
+- Which columns look like they could be **confounders**, things that might track
   with pathology but aren't pathology itself (sex, age, post-mortem interval, RNA
   quality)? Note them in your variable dictionary; you'll decide what to *do*
   about them when you run a real comparison.
 
-There isn't one right answer here—the point is to start reasoning about this as
+There isn't one right answer here; the point is to start reasoning about this as
 *your* dataset rather than a fixed recipe.
 
 Next comes [tutorial 02: Preprocessing](../02-preprocessing/index.qmd), the
