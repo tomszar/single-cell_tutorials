@@ -78,7 +78,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../site_libs/bootstrap/bootstrap-2a1ff8acbc8026a50e853ea6c4bd46a5.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-e7099dccd2c64493c1fb02673752d9e1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -208,7 +208,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 <p>This tutorial walks through loading one SEA-AD donor’s single-nucleus RNA-seq file into R and looking at what is inside. Using one donor instead of the whole cohort keeps the download and memory requirements small, so you can get a working object in a few minutes before you split off into your own track. Everything after the download stays in R.</p>
-<p>SEA-AD ships its data as <code>.h5ad</code>, a format from the Python world. We read it straight into R with <a href="https://github.com/cellgeni/schard"><code>schard</code></a>, which is pure R—no Python environment is required—and returns a <code>SingleCellExperiment</code>, the standard Bioconductor object used by both downstream pipelines.</p>
+<p>SEA-AD ships its data as <code>.h5ad</code>, a format from the Python world. We read it straight into R with <a href="https://github.com/cellgeni/schard"><code>schard</code></a>, which is pure R (no Python environment is required) and returns a <code>SingleCellExperiment</code>, the standard Bioconductor object used by both downstream pipelines.</p>
 <section id="before-you-start" class="level2">
 <h2 class="anchored" data-anchor-id="before-you-start">Before you start</h2>
 <p>You need R 4.2 or newer and a web browser. One donor file is small enough for any laptop.</p>
@@ -229,7 +229,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>remotes<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">"cellgeni/schard"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>If <code>schard</code> reports an installation error, install <code>rhdf5</code> on its own first—it is the component that reads the HDF5 file—and then try installing <code>schard</code> again.</p>
+<p>If <code>schard</code> reports an installation error, install <code>rhdf5</code> on its own first (it is the component that reads the HDF5 file), then try installing <code>schard</code> again.</p>
 </section>
 <section id="step-2-download-one-donors-file-in-a-web-browser" class="level2">
 <h2 class="anchored" data-anchor-id="step-2-download-one-donors-file-in-a-web-browser">Step 2 — Download one donor’s file in a web browser</h2>
@@ -296,7 +296,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <p>Two things to notice:</p>
 <ol type="1">
-<li>Column names with spaces need backticks, as with <code>Overall AD neuropathological Change</code>. Copy the capitalization exactly as <code>colnames(colData(sce))</code> prints it—here the “n” in “neuropathological” is lowercase.</li>
+<li>Column names with spaces need backticks, as with <code>Overall AD neuropathological Change</code>. Copy the capitalization exactly as <code>colnames(colData(sce))</code> prints it; here the “n” in “neuropathological” is lowercase.</li>
 <li>Because this is a single donor, <code>Sex</code> and the pathology stages are the same for every cell. The differences you care about appear only when you compare donors, which is the next step in both tracks.</li>
 </ol>
 <div class="callout callout-style-default callout-note callout-titled" title="Want a continuous pathology score?">
@@ -309,7 +309,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>These per-donor files carry only the <em>ordinal</em> pathology stages above. SEA-AD also defines a <strong>Continuous Pseudo-progression Score (CPS)</strong>—a continuous 0–1 axis of disease severity—but it is not stored in these files. It lives in the combined atlas object and in the supplementary data of the original paper (<a href="https://www.nature.com/articles/s41593-024-01774-5">Gabitto et al., <em>Nat Neurosci</em> 2024</a>). Download the per-donor CPS table here—a simple sheet with two columns, <code>Donor ID</code> and <code>CPS</code>: <a href="https://cdn.prod.website-files.com/689cfbd308fa7373b604d290/6a457afa3e9ab7e81cabccb1_sea-ad_global_and_local_cps_050126.xlsx">sea-ad_global_and_local_cps.xlsx</a>. Join it to your cells by <code>Donor ID</code>:</p>
+<p>These per-donor files carry only the <em>ordinal</em> pathology stages above. SEA-AD also defines a <strong>Continuous Pseudo-progression Score (CPS)</strong>, a continuous 0–1 axis of disease severity, but it is not stored in these files. It lives in the combined atlas object and in the supplementary data of the original paper (<a href="https://www.nature.com/articles/s41593-024-01774-5">Gabitto et al., <em>Nat Neurosci</em> 2024</a>). Download the per-donor CPS table here, a simple sheet with two columns, <code>Donor ID</code> and <code>CPS</code>: <a href="https://cdn.prod.website-files.com/689cfbd308fa7373b604d290/6a457afa3e9ab7e81cabccb1_sea-ad_global_and_local_cps_050126.xlsx">sea-ad_global_and_local_cps.xlsx</a>. Join it to your cells by <code>Donor ID</code>:</p>
 <div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readxl)</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>cps <span class="ot">&lt;-</span> <span class="fu">read_excel</span>(<span class="st">"../../data/sea-ad/sea-ad_global_and_local_cps.xlsx"</span>)</span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co"># match(): pull each cell's donor CPS out of the lookup table</span></span>
@@ -326,7 +326,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>As you explore, keep a running <strong>variable dictionary</strong>—your own notes on the <code>colData</code> columns: what each one means, whether it is categorical or continuous, and whether it describes a single <em>cell</em> or the whole <em>donor</em>. This is your artifact, not a graded worksheet, and you will lean on it constantly: the grouping variables, confounders, and contrasts you choose in later tutorials all come from here. Start it now with the columns above—<code>Subclass</code>, <code>Supertype</code>, <code>Sex</code>, <code>Overall AD neuropathological Change</code>, and the other ordinal staging scores (<code>Braak</code>, <code>Thal</code>, <code>CERAD score</code>)—and add to it whenever you meet a new column. Nobody hands you the “right” set of variables; deciding which ones matter for your question is the first piece of the analysis that is genuinely yours.</p>
+<p>As you explore, keep a running <strong>variable dictionary</strong>: your own notes on the <code>colData</code> columns, what each one means, whether it is categorical or continuous, and whether it describes a single <em>cell</em> or the whole <em>donor</em>. This is your artifact, not a graded worksheet, and you will lean on it constantly: the grouping variables, confounders, and contrasts you choose in later tutorials all come from here. Start it now with the columns above (<code>Subclass</code>, <code>Supertype</code>, <code>Sex</code>, <code>Overall AD neuropathological Change</code>, and the other ordinal staging scores <code>Braak</code>, <code>Thal</code>, <code>CERAD score</code>), and add to it whenever you meet a new column. Nobody hands you the “right” set of variables; deciding which ones matter for your question is the first piece of the analysis that is yours.</p>
 </div>
 </div>
 </section>
@@ -337,7 +337,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>astro <span class="ot">&lt;-</span> sce[, sce<span class="sc">$</span>Subclass <span class="sc">==</span> <span class="st">"Astrocyte"</span>]</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(astro)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>Microglia—the brain’s resident immune cells and a focus of Alzheimer’s research—are worth finding too. In this taxonomy they are not their own <code>Subclass</code>; they sit inside the broader <code>Immune</code> subclass, with <code>Supertype</code> labels beginning <code>Micro-PVM</code>. You can select them either way:</p>
+<p>Microglia, the brain’s resident immune cells and a focus of Alzheimer’s research, are worth finding too. In this taxonomy they are not their own <code>Subclass</code>; they sit inside the broader <code>Immune</code> subclass, with <code>Supertype</code> labels beginning <code>Micro-PVM</code>. You can select them either way:</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>immune <span class="ot">&lt;-</span> sce[, sce<span class="sc">$</span>Subclass <span class="sc">==</span> <span class="st">"Immune"</span>]                 <span class="co"># whole immune compartment</span></span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>micro  <span class="ot">&lt;-</span> sce[, <span class="fu">grepl</span>(<span class="st">"^Micro-PVM"</span>, sce<span class="sc">$</span>Supertype)]       <span class="co"># microglia specifically</span></span>
@@ -407,12 +407,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="where-this-goes-next" class="level2">
 <h2 class="anchored" data-anchor-id="where-this-goes-next">Where this goes next</h2>
 <p>You now have a <code>SingleCellExperiment</code> for one donor and know where sex, pathology, and cell type live in it.</p>
-<p>Before you move on, spend a few minutes exploring on your own—this is where the analysis choices you’ll make later begin:</p>
+<p>Before you move on, spend a few minutes exploring on your own. This is where the analysis choices you’ll make later begin:</p>
 <ul>
 <li>Browse the full metadata with <code>colnames(colData(sce))</code> and a few <code>table()</code> or <code>summary()</code> calls. Which variables would you use to compare <em>cells</em> within this donor? Which only make sense when comparing <em>donors</em>?</li>
-<li>Which columns look like they could be <strong>confounders</strong>—things that might track with pathology but aren’t pathology itself (sex, age, post-mortem interval, RNA quality)? Note them in your variable dictionary; you’ll decide what to <em>do</em> about them when you run a real comparison.</li>
+<li>Which columns look like they could be <strong>confounders</strong>, things that might track with pathology but aren’t pathology itself (sex, age, post-mortem interval, RNA quality)? Note them in your variable dictionary; you’ll decide what to <em>do</em> about them when you run a real comparison.</li>
 </ul>
-<p>There isn’t one right answer here—the point is to start reasoning about this as <em>your</em> dataset rather than a fixed recipe.</p>
+<p>There isn’t one right answer here; the point is to start reasoning about this as <em>your</em> dataset rather than a fixed recipe.</p>
 <p>Next comes <a href="../../tutorials/02-preprocessing/index.html">tutorial 02: Preprocessing</a>, the shared foundation for everything that follows. There you’ll take this same donor’s raw counts through quality control, normalization, feature selection, and dimensionality reduction to produce an analysis-ready object. Both project tracks start from that object:</p>
 <ul>
 <li><strong>Pseudobulk analysis:</strong> repeat this loading process over donors, then perform per-donor pseudobulk aggregation.</li>

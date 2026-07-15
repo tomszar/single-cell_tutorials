@@ -77,7 +77,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../site_libs/bootstrap/bootstrap-2a1ff8acbc8026a50e853ea6c4bd46a5.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-e7099dccd2c64493c1fb02673752d9e1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -202,7 +202,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>This tutorial gets your computer ready for the rest of the series. There is no biology or single-cell data here — just installing the tools and confirming, interactively, that they work together. By the end you will have R, RStudio, Quarto, and Git installed, this repository cloned to your computer, a handful of commonly used R packages available, and you will have run a code chunk inside RStudio and seen its output.</p>
+<p>This tutorial gets your computer ready for the rest of the series. There is no biology or single-cell data here, just installing the tools and confirming, interactively, that they work together. By the end you will have R, RStudio, Quarto, and Git installed, this repository cloned to your computer, a handful of commonly used R packages available, and you will have run a code chunk inside RStudio and seen its output.</p>
 <p>Do this once, before Tutorial 01.</p>
 <section id="what-youll-have-when-youre-done" class="level2">
 <h2 class="anchored" data-anchor-id="what-youll-have-when-youre-done">What you’ll have when you’re done</h2>
@@ -216,7 +216,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="before-you-start" class="level2">
 <h2 class="anchored" data-anchor-id="before-you-start">Before you start</h2>
-<p>You need administrator rights on your computer (to install software), an internet connection, and about 15–20 minutes. Instructions are given for Windows and macOS separately — follow the column for your operating system.</p>
+<p>You need administrator rights on your computer (to install software), an internet connection, and about 15–20 minutes. Instructions are given for Windows and macOS separately; follow the column for your operating system.</p>
 </section>
 <section id="step-1-install-r" class="level2">
 <h2 class="anchored" data-anchor-id="step-1-install-r">Step 1 — Install R</h2>
@@ -298,7 +298,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li>In “Repository URL”, paste: <code>https://github.com/tomszar/single-cell_tutorials.git</code></li>
 <li>Choose a location on your computer for the project to live, then click <strong>Create Project</strong>.</li>
 </ol>
-<p>RStudio will download the repository and reopen itself with the project loaded — you’ll see the tutorial folders (<code>tutorials/00-setup</code>, <code>tutorials/01-read-h5ad</code>, …) in the <strong>Files</strong> pane.</p>
+<p>RStudio will download the repository and reopen itself with the project loaded, and you’ll see the tutorial folders (<code>tutorials/00-setup</code>, <code>tutorials/01-read-h5ad</code>, …) in the <strong>Files</strong> pane.</p>
 <div class="callout callout-style-default callout-note callout-titled" title="Just want to read the tutorials first?">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -332,7 +332,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="fu">c</span>(<span class="st">"tidyverse"</span>, <span class="st">"BiocManager"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>This step downloads and compiles packages, so it can take a few minutes the first time. Package-specific requirements for each tutorial (e.g.&nbsp;<code>schard</code>, <code>SingleCellExperiment</code>) are installed separately within that tutorial — this step only covers what’s shared by all of them.</p>
+<p>This step downloads and compiles packages, so it can take a few minutes the first time. Package-specific requirements for each tutorial (e.g.&nbsp;<code>schard</code>, <code>SingleCellExperiment</code>) are installed separately within that tutorial; this step only covers what’s shared by all of them.</p>
 <div class="callout callout-style-default callout-warning callout-titled" title="Installation fails with a compilation error">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -367,7 +367,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Miles per gallon"</span></span>
 <span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>If it worked, a table summary appears first, followed by a scatter plot, both shown inline underneath the chunk (not in a separate window). That inline, run-as-you-go behavior is what every later tutorial relies on: you’ll run one chunk, look at the result, then decide what to do next — rather than running a whole script at once.</p>
+<p>If it worked, a table summary appears first, followed by a scatter plot, both shown inline underneath the chunk (not in a separate window). That inline, run-as-you-go behavior is what every later tutorial relies on: you’ll run one chunk, look at the result, then decide what to do next, rather than running a whole script at once.</p>
 </section>
 <section id="if-something-breaks" class="level2">
 <h2 class="anchored" data-anchor-id="if-something-breaks">If something breaks</h2>
@@ -407,7 +407,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>Confirm the chunk actually loaded <code>tidyverse</code> without an error above the plot — scroll up and check for a red error message. If <code>tidyverse</code> failed to install in Step 5, reinstall it and re-run the chunk.</p>
+<p>Confirm the chunk actually loaded <code>tidyverse</code> without an error above the plot; scroll up and check for a red error message. If <code>tidyverse</code> failed to install in Step 5, reinstall it and re-run the chunk.</p>
 </div>
 </div>
 <div class="callout callout-style-default callout-warning callout-titled" title="Package installation asks to compile from source and hangs or fails">

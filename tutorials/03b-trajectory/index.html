@@ -78,7 +78,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../site_libs/bootstrap/bootstrap-2a1ff8acbc8026a50e853ea6c4bd46a5.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-e7099dccd2c64493c1fb02673752d9e1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -214,21 +214,21 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>The <a href="../../tutorials/03a-pseudobulk/index.html">pseudobulk track</a> asked a question about <em>groups</em>: collapse each donor to one profile per cell type and compare piles of people. This tutorial asks the opposite kind of question—one about a <em>continuous process inside a single cell type</em>. Some cell populations are not discrete resting states but snapshots of cells caught partway through a gradual change. The clearest example in brain tissue is the <strong>oligodendrocyte lineage</strong>: oligodendrocyte precursor cells (<strong>OPCs</strong>) mature into the myelinating <strong>oligodendrocytes</strong> that insulate axons, and a single snapshot of tissue catches cells all along that path.</p>
-<p>There is no clock in the data telling you how far along each cell is. What we can recover instead is <strong>pseudotime</strong>: an ordering of cells along the progression, built purely from how their expression profiles change. This tutorial fits that ordering with <a href="https://bioconductor.org/packages/slingshot/"><code>slingshot</code></a>, reads off which genes turn on and off along it (myelin genes should rise; OPC genes should fall), and—because pseudotime has no inherent direction—makes you supply the biology that says which end is the beginning.</p>
+<p>The <a href="../../tutorials/03a-pseudobulk/index.html">pseudobulk track</a> asked a question about <em>groups</em>: collapse each donor to one profile per cell type and compare piles of people. This tutorial asks the opposite kind of question: one about a <em>continuous process inside a single cell type</em>. Some cell populations are not discrete resting states but snapshots of cells caught partway through a gradual change. The clearest example in brain tissue is the <strong>oligodendrocyte lineage</strong>: oligodendrocyte precursor cells (<strong>OPCs</strong>) mature into the myelinating <strong>oligodendrocytes</strong> that insulate axons, and a single snapshot of tissue catches cells all along that path.</p>
+<p>There is no clock in the data telling you how far along each cell is. What we can recover instead is <strong>pseudotime</strong>: an ordering of cells along the progression, built purely from how their expression profiles change. This tutorial fits that ordering with <a href="https://bioconductor.org/packages/slingshot/"><code>slingshot</code></a>, reads off which genes turn on and off along it (myelin genes should rise; OPC genes should fall), and, because pseudotime has no inherent direction, makes you supply the biology that says which end is the beginning.</p>
 <p>We stay on the single donor from tutorials 01–02 (<code>H20.33.001</code>), reusing the preprocessed object you already saved, so the whole thing runs in a class session.</p>
 <section id="learning-objectives" class="level2">
 <h2 class="anchored" data-anchor-id="learning-objectives">Learning objectives</h2>
 <p>By the end of this tutorial you should be able to:</p>
 <ul>
-<li>Say when a <strong>trajectory / pseudotime</strong> question is the right one—a continuous process within a lineage—versus a discrete group comparison.</li>
+<li>Say when a <strong>trajectory / pseudotime</strong> question is the right one (a continuous process within a lineage) versus a discrete group comparison.</li>
 <li>Subset a lineage from a preprocessed object and <strong>re-embed it on its own</strong>, and explain why the global UMAP is the wrong space for resolving within-lineage structure.</li>
 <li>Fit a pseudotime with <code>slingshot</code>: cluster the lineage, choose a <strong>start cluster from marker genes</strong>, and extract the ordering.</li>
 <li>Find genes that change along pseudotime and read them as a biological program.</li>
 <li>Explain why pseudotime’s <strong>direction is imposed, not discovered</strong>, and defend the direction you chose.</li>
 </ul>
-<p><strong>Prerequisites:</strong> tutorials 00–02. This tutorial reloads the object you saved at the end of <a href="../../tutorials/02-preprocessing/index.html">tutorial 02</a> (<code>outputs/sce_preprocessed.rds</code>)—no new download, and no need to redo QC or normalization. It assumes you are comfortable with the <code>SingleCellExperiment</code> container and with <code>reducedDims()</code>.</p>
-<p><strong>Expected outcome:</strong> a lineage object (OPCs + oligodendrocytes) carrying a <code>pseudotime</code> value per cell and a ranked list of genes that vary along it, saved to <code>outputs/</code>—plus a clear sense of which parts of that result you can defend and which are artifacts of forcing a line through the data.</p>
+<p><strong>Prerequisites:</strong> tutorials 00–02. This tutorial reloads the object you saved at the end of <a href="../../tutorials/02-preprocessing/index.html">tutorial 02</a> (<code>outputs/sce_preprocessed.rds</code>); no new download, and no need to redo QC or normalization. It assumes you are comfortable with the <code>SingleCellExperiment</code> container and with <code>reducedDims()</code>.</p>
+<p><strong>Expected outcome:</strong> a lineage object (OPCs + oligodendrocytes) carrying a <code>pseudotime</code> value per cell and a ranked list of genes that vary along it, saved to <code>outputs/</code>, plus a clear sense of which parts of that result you can defend and which are artifacts of forcing a line through the data.</p>
 </section>
 <section id="step-1-install-the-r-packages" class="level2">
 <h2 class="anchored" data-anchor-id="step-1-install-the-r-packages">Step 1 — Install the R packages</h2>
@@ -239,15 +239,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>BiocManager<span class="sc">::</span><span class="fu">install</span>(<span class="st">"slingshot"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p><code>BiocManager</code> will pull in <code>slingshot</code>’s own dependencies (including <code>TrajectoryUtils</code> and <code>DelayedMatrixStats</code>) automatically. If you are on the Nix dev shell, <code>slingshot</code> is already built—you do not need to run <code>BiocManager::install</code>.</p>
+<p><code>BiocManager</code> will pull in <code>slingshot</code>’s own dependencies (including <code>TrajectoryUtils</code> and <code>DelayedMatrixStats</code>) automatically. If you are on the Nix dev shell, <code>slingshot</code> is already built, so you do not need to run <code>BiocManager::install</code>.</p>
 </section>
 <section id="step-2-what-pseudotime-is-and-what-it-is-not" class="level2">
 <h2 class="anchored" data-anchor-id="step-2-what-pseudotime-is-and-what-it-is-not">Step 2 — What pseudotime is, and what it is not</h2>
-<p>A trajectory method assumes your cells sample a <strong>continuous transition</strong>. Given their expression profiles, it lays down a smooth path through the point cloud and gives each cell a number—its <strong>pseudotime</strong>—measuring how far along that path it sits. Cells with similar profiles get similar pseudotimes; cells at the two ends get the extreme values.</p>
+<p>A trajectory method assumes your cells sample a <strong>continuous transition</strong>. Given their expression profiles, it lays down a smooth path through the point cloud and gives each cell a number, its <strong>pseudotime</strong>, measuring how far along that path it sits. Cells with similar profiles get similar pseudotimes; cells at the two ends get the extreme values.</p>
 <p>Two cautions define the whole exercise:</p>
 <ul>
 <li><strong>Pseudotime is not real time.</strong> It is a <em>distance along a path in expression space</em>, not minutes or days. Two cells with the same pseudotime are transcriptionally similar; that is all the number promises.</li>
-<li><strong>The method never tells you which end is the start.</strong> A path has two ends; the algorithm fits the same curve whichever way you read it. Calling one end “the beginning” is a <em>biological</em> claim you make—here, that OPCs precede mature oligodendrocytes—and you justify it with known markers, not with the trajectory itself.</li>
+<li><strong>The method never tells you which end is the start.</strong> A path has two ends; the algorithm fits the same curve whichever way you read it. Calling one end “the beginning” is a <em>biological</em> claim you make (here, that OPCs precede mature oligodendrocytes), and you justify it with known markers, not with the trajectory itself.</li>
 </ul>
 <p>That second point is where your judgment enters, and it is deliberately left to you in Step 6.</p>
 <div class="callout callout-style-default callout-note callout-titled" title="Continuum vs. clusters—pick the right question">
@@ -275,7 +275,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>sce</span>
 <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(sce<span class="sc">$</span>Subclass)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>If that file doesn’t exist, go back and run tutorial 02 through its final save step—this tutorial does not recompute it.</p>
+<p>If that file doesn’t exist, go back and run tutorial 02 through its final save step; this tutorial does not recompute it.</p>
 </section>
 <section id="step-4-subset-the-lineage" class="level2">
 <h2 class="anchored" data-anchor-id="step-4-subset-the-lineage">Step 4 — Subset the lineage</h2>
@@ -284,7 +284,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>lineage <span class="ot">&lt;-</span> sce[, sce<span class="sc">$</span>Subclass <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"OPC"</span>, <span class="st">"Oligodendrocyte"</span>)]</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(lineage<span class="sc">$</span>Subclass)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>You should have a few thousand cells—many mature oligodendrocytes and a smaller pool of OPCs. That imbalance is expected: in cortex, most cells of this lineage have already matured.</p>
+<p>You should have a few thousand cells: many mature oligodendrocytes and a smaller pool of OPCs. That imbalance is expected: in cortex, most cells of this lineage have already matured.</p>
 <div class="callout callout-style-default callout-important callout-titled" title="Why re-embed instead of reusing the global map?">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -295,13 +295,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>The <code>PCA</code> and <code>UMAP</code> in <code>sce</code> were computed across <em>all</em> cell types. Their axes are dominated by the huge differences <em>between</em> neurons, astrocytes, oligodendrocytes, and so on—the coarse structure that separates cell types. That is exactly the wrong resolution for a trajectory, which lives in the <em>fine</em> variation <em>within</em> one lineage. So we recompute the embedding on just these cells, letting the axes capture OPC-to-oligodendrocyte variation instead. This is a general rule: <strong>a focused question needs a focused embedding.</strong></p>
+<p>The <code>PCA</code> and <code>UMAP</code> in <code>sce</code> were computed across <em>all</em> cell types. Their axes are dominated by the huge differences <em>between</em> neurons, astrocytes, oligodendrocytes, and so on, the coarse structure that separates cell types. That is exactly the wrong resolution for a trajectory, which lives in the <em>fine</em> variation <em>within</em> one lineage. So we recompute the embedding on just these cells, letting the axes capture OPC-to-oligodendrocyte variation instead. This is a general rule: <strong>a focused question needs a focused embedding.</strong></p>
 </div>
 </div>
 </section>
 <section id="step-5-re-embed-the-lineage-on-its-own" class="level2">
 <h2 class="anchored" data-anchor-id="step-5-re-embed-the-lineage-on-its-own">Step 5 — Re-embed the lineage on its own</h2>
-<p>Redo feature selection and dimensionality reduction—the same operations as tutorial 02, but now on the lineage subset so the axes describe <em>this</em> lineage’s variation. Set seeds so the embedding is reproducible.</p>
+<p>Redo feature selection and dimensionality reduction, the same operations as tutorial 02, but now on the lineage subset so the axes describe <em>this</em> lineage’s variation. Set seeds so the embedding is reproducible.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(scran)</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -318,11 +318,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="fu">plotReducedDim</span>(lineage, <span class="st">"UMAP"</span>, <span class="at">colour_by =</span> <span class="st">"Subclass"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>On the new UMAP the OPCs should sit apart from the oligodendrocytes, with the oligodendrocytes themselves spread out rather than collapsed to a point—that spread is the maturation variation the trajectory will order.</p>
+<p>On the new UMAP the OPCs should sit apart from the oligodendrocytes, with the oligodendrocytes themselves spread out rather than collapsed to a point; that spread is the maturation variation the trajectory will order.</p>
 </section>
 <section id="step-6-cluster-the-lineage-and-choose-where-it-starts" class="level2">
 <h2 class="anchored" data-anchor-id="step-6-cluster-the-lineage-and-choose-where-it-starts">Step 6 — Cluster the lineage and choose where it starts</h2>
-<p><code>slingshot</code> builds its path in two stages: it first connects <strong>clusters</strong> of cells with a minimum spanning tree to get the branching skeleton, then smooths a curve through them. So it needs cluster labels. We cluster on the PCA space (not the UMAP—UMAP distances are for looking, not computing).</p>
+<p><code>slingshot</code> builds its path in two stages: it first connects <strong>clusters</strong> of cells with a minimum spanning tree to get the branching skeleton, then smooths a curve through them. So it needs cluster labels. We cluster on the PCA space (not the UMAP; UMAP distances are for looking, not computing).</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(bluster)</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -350,7 +350,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>We pick the start cluster programmatically as the one with the highest mean <code>PDGFRA</code>, so the tutorial proceeds—but this is a scientific call, not a mechanical one. Confirm it with a <em>second</em> OPC marker (<code>CSPG4</code>, <code>PTPRZ1</code>) and a mature-oligodendrocyte marker (<code>PLP1</code>, <code>MOBP</code>, <code>MOG</code>) that should show the <em>opposite</em> pattern. If you cannot tell the two ends apart from markers, you cannot defend a direction—and the pseudotime you get is only an ordering, not a progression. Which genes convince you, and would they convince a skeptic?</p>
+<p>We pick the start cluster programmatically as the one with the highest mean <code>PDGFRA</code>, so the tutorial proceeds, but this is a scientific call, not a mechanical one. Confirm it with a <em>second</em> OPC marker (<code>CSPG4</code>, <code>PTPRZ1</code>) and a mature-oligodendrocyte marker (<code>PLP1</code>, <code>MOBP</code>, <code>MOG</code>) that should show the <em>opposite</em> pattern. If you cannot tell the two ends apart from markers, you cannot defend a direction, and the pseudotime you get is only an ordering, not a progression. Which genes convince you, and would they convince a skeptic?</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>start_cluster <span class="ot">&lt;-</span> <span class="fu">names</span>(<span class="fu">which.max</span>(</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tapply</span>(<span class="fu">logcounts</span>(lineage)[<span class="st">"PDGFRA"</span>, ], lineage<span class="sc">$</span>cluster, mean)</span>
@@ -382,7 +382,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>lineage<span class="sc">$</span>pseudotime <span class="ot">&lt;-</span> <span class="fu">slingPseudotime</span>(lineage)[, <span class="dv">1</span>]</span>
 <span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(lineage<span class="sc">$</span>pseudotime)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>For this lineage you should get a <strong>single</strong> path from the OPC cluster through the oligodendrocyte clusters—no branches. If <code>slingshot</code> reports more than one lineage, it found a branch point (see the troubleshooting note at the end); for now we work with the first path.</p>
+<p>For this lineage you should get a <strong>single</strong> path from the OPC cluster through the oligodendrocyte clusters, with no branches. If <code>slingshot</code> reports more than one lineage, it found a branch point (see the troubleshooting note at the end); for now we work with the first path.</p>
 <div class="callout callout-style-default callout-note callout-titled" title="Why fit in PCA space but look in UMAP?">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -422,7 +422,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>You will likely see the OPCs sitting as an island, separated from the oligodendrocytes by a stretch with few cells, and the curve drawn straight across that gap. <code>slingshot</code> will <em>always</em> connect the clusters you gave it—it cannot know the gap is real. A sparse region like this can mean the intermediate cells are genuinely rare (this maturation step is fast), or that they were lost in dissociation or QC. The pseudotime values <em>across</em> the gap are interpolation, not observation. Note where your trajectory is supported by dense cells and where it is bridging empty space.</p>
+<p>You will likely see the OPCs sitting as an island, separated from the oligodendrocytes by a stretch with few cells, and the curve drawn straight across that gap. <code>slingshot</code> will <em>always</em> connect the clusters you gave it; it cannot know the gap is real. A sparse region like this can mean the intermediate cells are genuinely rare (this maturation step is fast), or that they were lost in dissociation or QC. The pseudotime values <em>across</em> the gap are interpolation, not observation. Note where your trajectory is supported by dense cells and where it is bridging empty space.</p>
 </div>
 </div>
 </section>
@@ -446,7 +446,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Genes that rise along the trajectory (high late, in mature oligodendrocytes):</span></span>
 <span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a><span class="fu">tail</span>(cors, <span class="dv">15</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>Read the two lists as biology. The genes that <strong>fall</strong> should be OPC identity genes (<code>PDGFRA</code>, <code>CSPG4</code>, <code>PTPRZ1</code>, <code>VCAN</code>); the genes that <strong>rise</strong> should include the <strong>myelin program</strong>—<code>PLP1</code>, <code>MOBP</code>, <code>MBP</code>, <code>MOG</code>, <code>OPALIN</code>—the proteins a maturing oligodendrocyte makes to wrap axons. If that is what you see, the ordering is tracking real maturation biology, not noise.</p>
+<p>Read the two lists as biology. The genes that <strong>fall</strong> should be OPC identity genes (<code>PDGFRA</code>, <code>CSPG4</code>, <code>PTPRZ1</code>, <code>VCAN</code>); the genes that <strong>rise</strong> should include the <strong>myelin program</strong> (<code>PLP1</code>, <code>MOBP</code>, <code>MBP</code>, <code>MOG</code>, <code>OPALIN</code>), the proteins a maturing oligodendrocyte makes to wrap axons. If that is what you see, the ordering is tracking real maturation biology, not noise.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check specific markers directly, rather than trusting the top of a list.</span></span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Correlate straight from the full matrix so this works for any marker, not</span></span>
@@ -482,7 +482,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>Don’t expect correlations near 1. Most oligodendrocytes are already mature, so the big transcriptional jump is the OPC-to-oligodendrocyte switch at the start; across the mature cells expression is comparatively flat. A correlation of ~0.4–0.5 for a real marker is a genuine, interpretable signal at this scale, not a weak result. The <em>ranked pattern</em>—OPC genes at one end, myelin genes at the other—is the thing to trust.</p>
+<p>Don’t expect correlations near 1. Most oligodendrocytes are already mature, so the big transcriptional jump is the OPC-to-oligodendrocyte switch at the start; across the mature cells expression is comparatively flat. A correlation of ~0.4–0.5 for a real marker is an interpretable signal at this scale, not a weak result. The <em>ranked pattern</em> (OPC genes at one end, myelin genes at the other) is the thing to trust.</p>
 </div>
 </div>
 </section>
@@ -495,7 +495,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="sec-frontier" class="level2">
 <h2 class="anchored" data-anchor-id="sec-frontier">Step 11 — Your frontier</h2>
-<p>You now have a working trajectory. Everything above was scaffolding; the open questions below are where the real analysis is—and several have no tidy answer.</p>
+<p>You now have a working trajectory. Everything above was scaffolding; the open questions below are where the real analysis is, and several have no tidy answer.</p>
 <div class="callout callout-style-default callout-tip callout-titled" title="Required — stress-test the trajectory you built">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -509,7 +509,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>A trajectory method <em>always</em> returns a trajectory. Your job is to decide whether to believe this one.</p>
 <ol type="1">
 <li><strong>Defend the direction.</strong> You chose the OPC end as the start from <code>PDGFRA</code>. Build the full marker case: list the genes that convince you OPCs come first and mature oligodendrocytes come later, and say what you’d expect to see if you were wrong.</li>
-<li><strong>Probe the choices.</strong> Re-run from Step 5 changing one thing at a time—the number of PCs (<code>n_dimred</code>), the clustering resolution (<code>k</code> in <code>NNGraphParam</code>), the HVG count. Does the <em>ordering of markers</em> along pseudotime survive, or does the story change with the knobs? A result that only appears at one setting is not a result.</li>
+<li><strong>Probe the choices.</strong> Re-run from Step 5 changing one thing at a time: the number of PCs (<code>n_dimred</code>), the clustering resolution (<code>k</code> in <code>NNGraphParam</code>), the HVG count. Does the <em>ordering of markers</em> along pseudotime survive, or does the story change with the knobs? A result that only appears at one setting is not a result.</li>
 <li><strong>Interrogate the gap.</strong> Look again at the sparse region the curve bridges (Step 8). Is the maturation continuum really sampled, or is <code>slingshot</code> drawing a line between two disconnected clouds? What would you need to see to call this a genuine continuum?</li>
 </ol>
 </div>
@@ -524,11 +524,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>This is the question the SEA-AD data is really for, and it is genuinely open. Oligodendrocyte and myelin loss is reported in Alzheimer’s disease—so does the <em>maturation trajectory itself</em> differ between low- and high-pathology donors? Are proportionally fewer cells at the mature end? Does the myelin program turn on at a different point?</p>
+<p>This is the question the SEA-AD data is really for, and it is open. Oligodendrocyte and myelin loss is reported in Alzheimer’s disease, so does the <em>maturation trajectory itself</em> differ between low- and high-pathology donors? Are proportionally fewer cells at the mature end? Does the myelin program turn on at a different point?</p>
 <p>This is a <strong>scale-up</strong>, exactly parallel to the pseudobulk track’s cohort step (<a href="../../tutorials/03a-pseudobulk/index.html#sec-scaleup">03a, Step 8</a>). Our single donor is one pathology grade (<code>H20.33.001</code> is ADNC <code>Low</code>), so within this notebook there is nothing to compare against. To go further you would:</p>
 <ul>
 <li>run tutorials 01–02 and this lineage subset for <strong>several donors</strong> spanning the ADNC range (you choose the cohort and its confounder balance, as in 03a);</li>
-<li>fit a trajectory per donor—or integrate donors and fit one shared trajectory, which raises its own batch-correction questions;</li>
+<li>fit a trajectory per donor, or integrate donors and fit one shared trajectory, which raises its own batch-correction questions;</li>
 <li>compare the <strong>distribution of pseudotime</strong> (or the position where myelin genes switch on) across pathology groups.</li>
 </ul>
 <p>There is no guarantee of a difference, and a null result is a real finding. This is a research question, not an exercise with an answer key.</p>
@@ -559,7 +559,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="where-this-connects" class="level2">
 <h2 class="anchored" data-anchor-id="where-this-connects">Where this connects</h2>
 <ul>
-<li>The <a href="../../tutorials/03a-pseudobulk/index.html">pseudobulk track</a> and its differential expression sequel treat the <strong>donor</strong> as the unit and compare <em>groups</em>. This track treats the <strong>cell</strong> as the unit and orders a <em>continuum</em>. Same data, two fundamentally different questions—knowing which one your biology calls for is the point.</li>
+<li>The <a href="../../tutorials/03a-pseudobulk/index.html">pseudobulk track</a> and its differential expression sequel treat the <strong>donor</strong> as the unit and compare <em>groups</em>. This track treats the <strong>cell</strong> as the unit and orders a <em>continuum</em>. Same data, two fundamentally different questions; knowing which one your biology calls for is the point.</li>
 <li>Both tracks start from the shared preprocessed object built in <a href="../../tutorials/02-preprocessing/index.html">tutorial 02</a>.</li>
 </ul>
 </section>
@@ -588,7 +588,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>More than one entry from <code>slingLineages</code> means it placed a branch point—your clustering split the mature end into paths it couldn’t merge. Lower the clustering resolution (raise <code>k</code> in <code>NNGraphParam</code> to get fewer, coarser clusters) so the oligodendrocytes stay one group, then refit. There is one pseudotime column per lineage; <code>slingPseudotime(lineage)</code> shows them all.</p>
+<p>More than one entry from <code>slingLineages</code> means it placed a branch point; your clustering split the mature end into paths it couldn’t merge. Lower the clustering resolution (raise <code>k</code> in <code>NNGraphParam</code> to get fewer, coarser clusters) so the oligodendrocytes stay one group, then refit. There is one pseudotime column per lineage; <code>slingPseudotime(lineage)</code> shows them all.</p>
 </div>
 </div>
 <div class="callout callout-style-default callout-warning callout-titled" title="The start cluster looks wrong (markers disagree)">
@@ -614,7 +614,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p><code>embedCurves</code> needs the target reduced dimension to exist—confirm <code>reducedDimNames(lineage)</code> still lists <code>"UMAP"</code>. If you only need the ordering and not the drawn curve, skip this; the <code>pseudotime</code> column is already attached from Step 7.</p>
+<p><code>embedCurves</code> needs the target reduced dimension to exist; confirm <code>reducedDimNames(lineage)</code> still lists <code>"UMAP"</code>. If you only need the ordering and not the drawn curve, skip this; the <code>pseudotime</code> column is already attached from Step 7.</p>
 </div>
 </div>
 

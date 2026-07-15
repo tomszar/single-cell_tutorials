@@ -78,7 +78,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="../../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="../../site_libs/bootstrap/bootstrap-2a1ff8acbc8026a50e853ea6c4bd46a5.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="../../site_libs/bootstrap/bootstrap-e7099dccd2c64493c1fb02673752d9e1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -222,8 +222,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>In <a href="../../tutorials/01-read-h5ad/index.html">tutorial 01</a> you loaded one SEA-AD donor into a <code>SingleCellExperiment</code> and found where the cell-type labels, sex, and pathology score live. Quality control and normalization both start from <strong>raw counts</strong>: the number of times each gene was detected in each nucleus, straight from the sequencer. Raw counts are not yet something you can compare cell to cell, because they are dominated by technical noise—some droplets captured more RNA than others, some are empty or damaged, and a handful of highly expressed genes drown out the rest. SEA-AD’s files actually ship <em>two</em> versions of the matrix: a convenience copy that is already normalized, and the raw counts stored alongside it. Step 2 shows how to tell them apart and grab the raw one.</p>
-<p>Preprocessing is the step that turns raw counts into an object you can actually analyze. By the end you will have thrown out low-quality nuclei, put the remaining cells on a common scale, picked the genes that carry biological signal, and compressed the data down to a two-dimensional map you can look at. Both project tracks—pseudobulk and trajectory—start from this object, so this tutorial is the shared foundation for everything that follows.</p>
+<p>In <a href="../../tutorials/01-read-h5ad/index.html">tutorial 01</a> you loaded one SEA-AD donor into a <code>SingleCellExperiment</code> and found where the cell-type labels, sex, and pathology score live. Quality control and normalization both start from <strong>raw counts</strong>: the number of times each gene was detected in each nucleus, straight from the sequencer. Raw counts are not yet something you can compare cell to cell, because they are dominated by technical noise: some droplets captured more RNA than others, some are empty or damaged, and a handful of highly expressed genes drown out the rest. SEA-AD’s files actually ship <em>two</em> versions of the matrix: a convenience copy that is already normalized, and the raw counts stored alongside it. Step 2 shows how to tell them apart and grab the raw one.</p>
+<p>Preprocessing is the step that turns raw counts into an object you can actually analyze. By the end you will have thrown out low-quality nuclei, put the remaining cells on a common scale, picked the genes that carry biological signal, and compressed the data down to a two-dimensional map you can look at. Both project tracks (pseudobulk and trajectory) start from this object, so this tutorial is the shared foundation for everything that follows.</p>
 <p>We stay on the single donor from tutorial 01 (<code>H20.33.001</code>) so the whole thing runs in a class session.</p>
 <section id="learning-objectives" class="level2">
 <h2 class="anchored" data-anchor-id="learning-objectives">Learning objectives</h2>
@@ -232,20 +232,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li>Explain <strong>why</strong> single-cell counts need quality control and normalization before any downstream analysis.</li>
 <li>Compute per-cell QC metrics (library size, genes detected, % mitochondrial reads) and interpret their distributions.</li>
 <li>Filter low-quality cells with thresholds you can <em>defend</em>, and explain the difference between fixed and adaptive (MAD-based) cutoffs.</li>
-<li>Normalize counts—both the quick log-normalization and the more principled <code>scran</code> pooling approach—and say what each one corrects for.</li>
+<li>Normalize counts, both the quick log-normalization and the more principled <code>scran</code> pooling approach, and say what each one corrects for.</li>
 <li>Select highly variable genes and explain why we don’t just use all of them.</li>
 <li>Reduce dimensionality with PCA and then UMAP, set a seed, and read the resulting embedding.</li>
 </ul>
 <p><strong>Prerequisites:</strong> tutorials 00 and 01, and the donor <code>.h5ad</code> file already downloaded to <code>data/sea-ad/donor_H20.33.001.h5ad</code> under the repository root. This tutorial reuses that same file.</p>
-<p><strong>Expected outcome:</strong> a filtered, normalized <code>SingleCellExperiment</code> carrying a <code>logcounts</code> assay, a stored set of highly variable genes, and <code>PCA</code> and <code>UMAP</code> entries in <code>reducedDims()</code>—ready for either analysis track.</p>
+<p><strong>Expected outcome:</strong> a filtered, normalized <code>SingleCellExperiment</code> carrying a <code>logcounts</code> assay, a stored set of highly variable genes, and <code>PCA</code> and <code>UMAP</code> entries in <code>reducedDims()</code>, ready for either analysis track.</p>
 </section>
 <section id="step-1-install-the-r-packages" class="level2">
 <h2 class="anchored" data-anchor-id="step-1-install-the-r-packages">Step 1 — Install the R packages</h2>
 <p>You already have <code>schard</code> and <code>SingleCellExperiment</code> from tutorial 01. The new tools all come from Bioconductor and belong to the <a href="https://bioconductor.org/books/release/OSCA/"><code>scran</code>/<code>scater</code> ecosystem</a> built specifically for single-cell work:</p>
 <ul>
-<li><strong><code>scuttle</code></strong> — QC metrics and normalization helpers.</li>
-<li><strong><code>scran</code></strong> — pooling-based size factors and variance modeling for feature selection.</li>
-<li><strong><code>scater</code></strong> — PCA/UMAP wrappers and plotting.</li>
+<li><strong><code>scuttle</code></strong>: QC metrics and normalization helpers.</li>
+<li><strong><code>scran</code></strong>: pooling-based size factors and variance modeling for feature selection.</li>
+<li><strong><code>scater</code></strong>: PCA/UMAP wrappers and plotting.</li>
 </ul>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">requireNamespace</span>(<span class="st">"BiocManager"</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>)) {</span>
@@ -253,7 +253,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>BiocManager<span class="sc">::</span><span class="fu">install</span>(<span class="fu">c</span>(<span class="st">"scuttle"</span>, <span class="st">"scran"</span>, <span class="st">"scater"</span>, <span class="st">"uwot"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p><code>uwot</code> is the package that actually computes the UMAP; <code>scater</code> calls it for us. If you are on the Nix dev shell, all of these are already built—you do not need to run <code>install.packages</code>.</p>
+<p><code>uwot</code> is the package that actually computes the UMAP; <code>scater</code> calls it for us. If you are on the Nix dev shell, all of these are already built, so you do not need to run <code>install.packages</code>.</p>
 <div class="callout callout-style-default callout-note callout-titled" title="Expect deprecation warnings">
 <div class="callout-header d-flex align-content-center">
 <div class="callout-icon-container">
@@ -264,7 +264,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>This tutorial uses the <code>scran</code>/<code>scater</code>/<code>scuttle</code> functions taught in the <a href="https://bioconductor.org/books/release/OSCA/">OSCA book</a>—the standard learning path for single-cell analysis in R. On very recent Bioconductor releases some of these functions print a deprecation notice pointing to the newer <code>scrapper</code> package. They still work exactly as described here, and the warnings are safe to ignore for this tutorial; we stay on the well-documented ecosystem so you can look up every step.</p>
+<p>This tutorial uses the <code>scran</code>/<code>scater</code>/<code>scuttle</code> functions taught in the <a href="https://bioconductor.org/books/release/OSCA/">OSCA book</a>, the standard learning path for single-cell analysis in R. On very recent Bioconductor releases some of these functions print a deprecation notice pointing to the newer <code>scrapper</code> package. They still work exactly as described here, and the warnings are safe to ignore for this tutorial; we stay on the well-documented ecosystem so you can look up every step.</p>
 </div>
 </div>
 </section>
@@ -279,7 +279,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>sce <span class="ot">&lt;-</span> schard<span class="sc">::</span><span class="fu">h5ad2sce</span>(h5)</span>
 <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>sce</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p><code>schard</code> loads the file’s main matrix, <code>X</code>. For SEA-AD that matrix is <strong>not raw counts</strong>—it is a log-normalized copy the authors precomputed for convenience. You can see this: the values are fractional and small, not the whole numbers a count matrix would have.</p>
+<p><code>schard</code> loads the file’s main matrix, <code>X</code>. For SEA-AD that matrix is <strong>not raw counts</strong>: it is a log-normalized copy the authors precomputed for convenience. You can see this: the values are fractional and small, not the whole numbers a count matrix would have.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">assayNames</span>(sce)                 <span class="co"># "X"</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">range</span>(<span class="fu">assay</span>(sce, <span class="st">"X"</span>))          <span class="co"># small, non-integer values (max ~8)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
@@ -306,7 +306,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>The point of this tutorial is to do QC and normalization yourself, with choices you can see and defend—starting from someone else’s normalized matrix would skip exactly the steps you are here to learn. You also <em>can’t</em> do count-based QC (library size, mitochondrial fraction) on values that are no longer counts. Different datasets hide their raw counts in different places (a <code>layers/</code> entry, an <code>.h5ad</code> <code>raw</code> slot, a separate file); always check before assuming the matrix you loaded is raw.</p>
+<p>The point of this tutorial is to do QC and normalization yourself, with choices you can see and defend. Starting from someone else’s normalized matrix would skip exactly the steps you are here to learn. You also <em>can’t</em> do count-based QC (library size, mitochondrial fraction) on values that are no longer counts. Different datasets hide their raw counts in different places (a <code>layers/</code> entry, an <code>.h5ad</code> <code>raw</code> slot, a separate file); always check before assuming the matrix you loaded is raw.</p>
 </div>
 </div>
 </section>
@@ -341,7 +341,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>If <code>sum(is_mito)</code> is <code>0</code>, you matched the wrong identifiers—the symbols are somewhere other than where you looked. If it is in the hundreds, you probably matched Ensembl IDs by accident. The human mitochondrial genome encodes 13 protein-coding genes, so a count of 13 is what you want here.</p>
+<p>If <code>sum(is_mito)</code> is <code>0</code>, you matched the wrong identifiers; the symbols are somewhere other than where you looked. If it is in the hundreds, you probably matched Ensembl IDs by accident. The human mitochondrial genome encodes 13 protein-coding genes, so a count of 13 is what you want here.</p>
 </div>
 </div>
 <p>Now compute the metrics and attach them to <code>colData(sce)</code>.</p>
@@ -372,10 +372,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h3 class="anchored" data-anchor-id="fixed-vs.-adaptive-thresholds">Fixed vs.&nbsp;adaptive thresholds</h3>
 <p>There are two ways to pick cutoffs:</p>
 <ul>
-<li><strong>Fixed thresholds</strong> — e.g.&nbsp;“drop cells with fewer than 500 genes or more than 10% mito reads.” Simple and transparent, but the right number depends on the tissue, the protocol, and sequencing depth. A cutoff that is sensible for blood may throw away perfectly good neurons.</li>
-<li><strong>Adaptive thresholds</strong> — flag cells that are outliers <em>relative to this dataset</em>. The standard approach uses the <strong>median absolute deviation (MAD)</strong>: a cell is an outlier if it sits more than a few MADs from the median. This adapts to whatever the data’s own scale is, which is why it is the OSCA book’s default.</li>
+<li><strong>Fixed thresholds</strong>: e.g.&nbsp;“drop cells with fewer than 500 genes or more than 10% mito reads.” Simple and transparent, but the right number depends on the tissue, the protocol, and sequencing depth. A cutoff that is sensible for blood may throw away perfectly good neurons.</li>
+<li><strong>Adaptive thresholds</strong>: flag cells that are outliers <em>relative to this dataset</em>. The standard approach uses the <strong>median absolute deviation (MAD)</strong>: a cell is an outlier if it sits more than a few MADs from the median. This adapts to whatever the data’s own scale is, which is why it is the OSCA book’s default.</li>
 </ul>
-<p>We’ll <em>start</em> with the adaptive approach via <code>perCellQCFilters</code>, which flags cells that are outliers on <em>low</em> library size, <em>low</em> genes detected, or <em>high</em> mito fraction—the three directions that indicate poor quality. It works on the log scale for size and complexity (counts are right-skewed) and flags high-mito cells in the upper tail.</p>
+<p>We’ll <em>start</em> with the adaptive approach via <code>perCellQCFilters</code>, which flags cells that are outliers on <em>low</em> library size, <em>low</em> genes detected, or <em>high</em> mito fraction, the three directions that indicate poor quality. It works on the log scale for size and complexity (counts are right-skewed) and flags high-mito cells in the upper tail.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>qc <span class="ot">&lt;-</span> <span class="fu">perCellQCFilters</span>(</span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  sce,</span>
@@ -393,7 +393,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="your-decision-which-cells-to-cut" class="level3">
 <h3 class="anchored" data-anchor-id="your-decision-which-cells-to-cut">Your decision: which cells to cut</h3>
-<p>The adaptive rule is a <em>starting point</em>, not the answer. Before you accept it, set a fixed rule of your own and see where the two disagree. Pick cutoffs you can defend—“fewer than 500 counts, fewer than 300 genes, or more than 10% mitochondrial”—and compare them against the adaptive verdict on the <em>same, still-unfiltered</em> cells. To justify your choices, look at what previous studies did and the reasoning they gave; a good place to start is the SEA-AD paper referenced in tutorial 01 (<a href="https://www.nature.com/articles/s41593-024-01774-5">Gabitto et al., <em>Nat Neurosci</em> 2024</a>).</p>
+<p>The adaptive rule is a <em>starting point</em>, not the answer. Before you accept it, set a fixed rule of your own and see where the two disagree. Pick cutoffs you can defend (“fewer than 500 counts, fewer than 300 genes, or more than 10% mitochondrial”) and compare them against the adaptive verdict on the <em>same, still-unfiltered</em> cells. To justify your choices, look at what previous studies did and the reasoning they gave; a good place to start is the SEA-AD paper referenced in tutorial 01 (<a href="https://www.nature.com/articles/s41593-024-01774-5">Gabitto et al., <em>Nat Neurosci</em> 2024</a>).</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Your fixed rule—change these numbers and re-run.</span></span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>fixed_discard <span class="ot">&lt;-</span> sce<span class="sc">$</span>sum <span class="sc">&lt;</span> <span class="dv">500</span> <span class="sc">|</span></span>
@@ -403,7 +403,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Where do the two rules agree, and where do they disagree?</span></span>
 <span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(<span class="at">adaptive =</span> sce<span class="sc">$</span>discard, <span class="at">fixed =</span> fixed_discard)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>Look at the off-diagonal counts—the cells only <em>one</em> rule drops—and ask why. A cell the adaptive rule keeps but your fixed rule cuts might be a genuinely small but healthy cell type; a cell your fixed rule keeps but the adaptive rule cuts might be a high-mito straggler. There is no universally correct cutoff—the right one depends on this tissue, protocol, and sequencing depth—so your job is to choose a rule you can <em>defend</em>, not to match an answer key.</p>
+<p>Look at the off-diagonal counts, the cells only <em>one</em> rule drops, and ask why. A cell the adaptive rule keeps but your fixed rule cuts might be a small but healthy cell type; a cell your fixed rule keeps but the adaptive rule cuts might be a high-mito straggler. There is no universally correct cutoff: the right one depends on this tissue, protocol, and sequencing depth. Your job is to choose a rule you can <em>defend</em>, not to match an answer key.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Apply your choice. We default to the adaptive rule so the tutorial proceeds;</span></span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="co"># swap in `fixed_discard` if that is the call you would defend.</span></span>
@@ -443,7 +443,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="step-6-select-highly-variable-genes" class="level2">
 <h2 class="anchored" data-anchor-id="step-6-select-highly-variable-genes">Step 6 — Select highly variable genes</h2>
-<p>Most of the ~36,000 genes are either off or uniformly expressed and carry no information about how cells differ. Feeding all of them into PCA just adds noise. <strong>Highly variable genes (HVGs)</strong> are the genes whose variance across cells exceeds what we’d expect from technical noise alone—those are where the biological signal is.</p>
+<p>Most of the ~36,000 genes are either off or uniformly expressed and carry no information about how cells differ. Feeding all of them into PCA just adds noise. <strong>Highly variable genes (HVGs)</strong> are the genes whose variance across cells exceeds what we’d expect from technical noise alone; those are where the biological signal is.</p>
 <p><code>modelGeneVar</code> decomposes each gene’s variance into a technical trend (variance expected at that expression level) and the biological excess above it. <code>getTopHVGs</code> then ranks genes by that biological component.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>dec <span class="ot">&lt;-</span> <span class="fu">modelGeneVar</span>(sce)</span>
@@ -476,7 +476,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>hvg_1000 <span class="ot">&lt;-</span> <span class="fu">getTopHVGs</span>(dec, <span class="at">n =</span> <span class="dv">1000</span>)</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>hvg_5000 <span class="ot">&lt;-</span> <span class="fu">getTopHVGs</span>(dec, <span class="at">n =</span> <span class="dv">5000</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
-<p>Swap <code>hvg_1000</code> or <code>hvg_5000</code> into <code>runPCA(..., subset_row = ...)</code> and look at the UMAP: too few genes and you drop real structure, so distinct cell types start to merge; too many and technical noise creeps back in and blurs the clusters. Which cutoff gives the cleanest separation of the <code>Subclass</code> labels for <em>this</em> donor? Note your choice and your reasoning—there isn’t a single right value.</p>
+<p>Swap <code>hvg_1000</code> or <code>hvg_5000</code> into <code>runPCA(..., subset_row = ...)</code> and look at the UMAP: too few genes and you drop real structure, so distinct cell types start to merge; too many and technical noise creeps back in and blurs the clusters. Which cutoff gives the cleanest separation of the <code>Subclass</code> labels for <em>this</em> donor? Note your choice and your reasoning; there isn’t a single right value.</p>
 </div>
 </div>
 </section>
@@ -485,7 +485,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Even restricted to 2000 genes, the data lives in 2000-dimensional space. Two reductions get us to something interpretable:</p>
 <ol type="1">
 <li><strong>PCA</strong> finds the directions of greatest variation. The first few dozen principal components capture the dominant structure while filtering noise; downstream steps run on these instead of raw genes.</li>
-<li><strong>UMAP</strong> takes those PCs and lays them out in 2D for visualization. UMAP is for <em>looking</em>, not for quantitative claims—distances between far-apart clusters are not meaningful.</li>
+<li><strong>UMAP</strong> takes those PCs and lays them out in 2D for visualization. UMAP is for <em>looking</em>, not for quantitative claims: distances between far-apart clusters are not meaningful.</li>
 </ol>
 <p>Both are randomized, so set a seed before each for reproducibility.</p>
 <div class="cell">
@@ -498,7 +498,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <section id="your-decision-how-many-pcs-to-keep" class="level3">
 <h3 class="anchored" data-anchor-id="your-decision-how-many-pcs-to-keep">Your decision: how many PCs to keep</h3>
-<p>The scree plot is there for a real choice, not decoration. Downstream steps don’t need all 50 PCs—only the ones carrying structure, before the curve flattens into noise. Read the elbow off the plot above and keep that many:</p>
+<p>The scree plot is there for a real choice, not decoration. Downstream steps don’t need all 50 PCs, only the ones carrying structure, before the curve flattens into noise. Read the elbow off the plot above and keep that many:</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>n_pcs <span class="ot">&lt;-</span> <span class="dv">20</span>   <span class="co"># your call—read it from the elbow in the scree plot</span></span>
 <span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a></span>
@@ -522,14 +522,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>Distinct, well-separated islands that match known cell types are a good sign. If everything is one blob, or if the clusters line up with library size instead of biology, revisit your QC and normalization—those are the usual culprits. Try coloring by <code>sum</code> or <code>subsets_Mito_percent</code> to check that technical variation isn’t driving the layout.</p>
+<p>Distinct, well-separated islands that match known cell types are a good sign. If everything is one blob, or if the clusters line up with library size instead of biology, revisit your QC and normalization; those are the usual culprits. Try coloring by <code>sum</code> or <code>subsets_Mito_percent</code> to check that technical variation isn’t driving the layout.</p>
 </div>
 </div>
 </section>
 </section>
 <section id="step-8-save-the-preprocessed-object" class="level2">
 <h2 class="anchored" data-anchor-id="step-8-save-the-preprocessed-object">Step 8 — Save the preprocessed object</h2>
-<p>Both tracks start here, so save the result. The repo keeps generated analysis outputs in the top-level <code>outputs/</code> folder, which <code>.gitignore</code> already excludes from version control—so the object won’t get committed by accident.</p>
+<p>Both tracks start here, so save the result. The repo keeps generated analysis outputs in the top-level <code>outputs/</code> folder, which <code>.gitignore</code> already excludes from version control, so the object won’t get committed by accident.</p>
 <div class="cell">
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(sce, <span class="st">"../../outputs/sce_preprocessed.rds"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </div>
@@ -554,7 +554,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 <div class="callout-body-container callout-body">
-<p>You made real decisions in this tutorial—which cells to cut, how many genes to keep, how many PCs to trust. None had a single correct answer, and a classmate who chose differently will end up with a slightly different object. That is normal in single-cell analysis, not a mistake to hide. Before moving on, look back over your QC, HVG, and PCA choices and ask: <strong>which of these could you defend to a skeptical reviewer, and which were just the default I left in?</strong> The ones you can’t yet defend are the ones worth revisiting.</p>
+<p>You made real decisions in this tutorial: which cells to cut, how many genes to keep, how many PCs to trust. None had a single correct answer, and a classmate who chose differently will end up with a slightly different object. That is normal in single-cell analysis, not a mistake to hide. Before moving on, look back over your QC, HVG, and PCA choices and ask: <strong>which of these could you defend to a skeptical reviewer, and which were just the default I left in?</strong> The ones you can’t yet defend are the ones worth revisiting.</p>
 </div>
 </div>
 </section>
