@@ -13,6 +13,29 @@
       let
         pkgs = import nixpkgs { inherit system; };
 
+        # nixpkgs currently pairs quarto 1.9.37 with pandoc 3.7.0.2, but
+        # quarto 1.9 emits a `syntax-highlighting` pandoc option that only
+        # pandoc >= 3.8 understands, so `quarto render` dies with
+        #   Aeson exception: Error in $: Unknown option "syntax-highlighting"
+        # Pandoc 3.8 isn't in nixpkgs yet (even nixos-unstable still ships
+        # 3.7.0.2). The quarto release tarball bundles the exact pandoc it was
+        # built against (a statically linked pandoc 3.8.3) under
+        # bin/tools/x86_64/pandoc; nixpkgs deletes it and substitutes its own.
+        # Extract that bundled pandoc and hand it back to quarto so the two
+        # match. Re-check whether this is still needed after a `nix flake
+        # update` bumps quarto or pandoc.
+        quartoBundledPandoc =
+          pkgs.runCommandLocal "pandoc-quarto-${pkgs.quarto.version}"
+            { meta.mainProgram = "pandoc"; }
+            ''
+              mkdir -p "$out/bin"
+              tar -xzf ${pkgs.quarto.src} -C "$out/bin" --strip-components=4 \
+                "quarto-${pkgs.quarto.version}/bin/tools/x86_64/pandoc"
+              chmod +x "$out/bin/pandoc"
+            '';
+
+        quarto = pkgs.quarto.override { pandoc = quartoBundledPandoc; };
+
         # Not on CRAN/Bioconductor; pulled straight from its GitHub repo, the
         # same source the tutorials point to via `remotes::install_github()`.
         schard = pkgs.rPackages.buildRPackage {
@@ -74,7 +97,7 @@
           packages = [
             rEnv
             rstudioEnv
-            pkgs.quarto
+            quarto
           ];
         };
       }
