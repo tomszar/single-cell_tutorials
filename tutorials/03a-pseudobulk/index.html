@@ -151,6 +151,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <a class="nav-link" href="../../tutorials/03b-trajectory/index.html"> 
 <span class="menu-text">03b: Trajectory</span></a>
   </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../tutorials/04-pseudobulk-de/index.html"> 
+<span class="menu-text">04: Pseudobulk DE</span></a>
+  </li>  
 </ul>
           </div> <!-- /navcollapse -->
             <div class="quarto-navbar-tools">
@@ -211,7 +215,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<p>Tutorials <a href="../../tutorials/01-read-h5ad/index.html">01</a> and <a href="../../tutorials/02-preprocessing/index.html">02</a> stayed inside a <em>single</em> donor: enough to learn the object and the preprocessing steps, but not enough to answer the question the SEA-AD project actually cares about: <strong>which genes change with Alzheimer’s pathology?</strong> That is a comparison <em>between</em> people, and comparing people is <em>differential expression</em>, which is the next tutorial (<a href="../04-pseudobulk-de/index.qmd">04</a>).</p>
+<p>Tutorials <a href="../../tutorials/01-read-h5ad/index.html">01</a> and <a href="../../tutorials/02-preprocessing/index.html">02</a> stayed inside a <em>single</em> donor: enough to learn the object and the preprocessing steps, but not enough to answer the question the SEA-AD project actually cares about: <strong>which genes change with Alzheimer’s pathology?</strong> That is a comparison <em>between</em> people, and comparing people is <em>differential expression</em>, which is the next tutorial (<a href="../../tutorials/04-pseudobulk-de/index.html">04</a>).</p>
 <p>Before you can compare people, though, you need the right <strong>unit</strong> to compare. The mistake, once you have hundreds of thousands of cells, is to treat every cell as an independent data point and test gene by gene: pool all the astrocytes from low-pathology donors, all the astrocytes from high-pathology donors, and compare the two piles. That answer is statistically wrong (we’ll see why below), and the fix is <strong>pseudobulk</strong>: collapse each donor’s cells of a given type into <em>one</em> summed count profile. This tutorial builds that unit for a single donor. Stacking many donors’ profiles (the input the differential-expression tutorial needs) is then a short loop you’ll write at the end.</p>
 <section id="learning-objectives" class="level2">
 <h2 class="anchored" data-anchor-id="learning-objectives">Learning objectives</h2>
@@ -405,7 +409,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="where-this-connects" class="level2">
 <h2 class="anchored" data-anchor-id="where-this-connects">Where this connects</h2>
 <ul>
-<li><a href="../04-pseudobulk-de/index.qmd">Tutorial 04 — pseudobulk differential expression</a> takes the stacked cohort matrix and tests, within one cell type, which genes change between low- and high-pathology donors.</li>
+<li><a href="../../tutorials/04-pseudobulk-de/index.html">Tutorial 04 — pseudobulk differential expression</a> takes the stacked cohort matrix and tests, within one cell type, which genes change between low- and high-pathology donors.</li>
 <li>The other analysis track, <a href="../../tutorials/03b-trajectory/index.html">trajectory</a>, asks a different question of the same data: <em>ordering</em> cells along a continuous process rather than <em>comparing</em> groups of donors. Pseudobulk’s unit is the donor; trajectory’s is the individual cell.</li>
 </ul>
 </section>

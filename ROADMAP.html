@@ -115,6 +115,10 @@ ul.task-list li input[type="checkbox"] {
     <a class="nav-link" href="./tutorials/03b-trajectory/index.html"> 
 <span class="menu-text">03b: Trajectory</span></a>
   </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="./tutorials/04-pseudobulk-de/index.html"> 
+<span class="menu-text">04: Pseudobulk DE</span></a>
+  </li>  
 </ul>
           </div> <!-- /navcollapse -->
             <div class="quarto-navbar-tools">
@@ -138,8 +142,8 @@ ul.task-list li input[type="checkbox"] {
   <li><a href="#after-02-the-two-tracks" id="toc-after-02-the-two-tracks" class="nav-link" data-scroll-target="#after-02-the-two-tracks">After 02: the two tracks</a>
   <ul class="collapse">
   <li><a href="#a-pseudobulk-generation-done" id="toc-a-pseudobulk-generation-done" class="nav-link" data-scroll-target="#a-pseudobulk-generation-done">03a — Pseudobulk generation (Done)</a></li>
-  <li><a href="#pseudobulk-differential-expression-planned" id="toc-pseudobulk-differential-expression-planned" class="nav-link" data-scroll-target="#pseudobulk-differential-expression-planned">04 — Pseudobulk differential expression (Planned)</a></li>
-  <li><a href="#b-trajectory-track" id="toc-b-trajectory-track" class="nav-link" data-scroll-target="#b-trajectory-track">03b — Trajectory track</a></li>
+  <li><a href="#pseudobulk-differential-expression-done" id="toc-pseudobulk-differential-expression-done" class="nav-link" data-scroll-target="#pseudobulk-differential-expression-done">04 — Pseudobulk differential expression (Done)</a></li>
+  <li><a href="#b-trajectory-track-done" id="toc-b-trajectory-track-done" class="nav-link" data-scroll-target="#b-trajectory-track-done">03b — Trajectory track (Done)</a></li>
   </ul></li>
   <li><a href="#open-questions" id="toc-open-questions" class="nav-link" data-scroll-target="#open-questions">Open questions</a></li>
   </ul></li>
@@ -194,17 +198,17 @@ ul.task-list li input[type="checkbox"] {
 </tr>
 <tr class="odd">
 <td>03b</td>
-<td>Trajectory track</td>
-<td>Planned</td>
+<td>Trajectory track — pseudotime through one donor’s oligodendrocyte lineage</td>
+<td>Done</td>
 </tr>
 <tr class="even">
 <td>04</td>
 <td>Pseudobulk — differential expression across AD pathology</td>
-<td>Planned</td>
+<td>Done</td>
 </tr>
 </tbody>
 </table>
-<p>Tutorials 00 and 01 both load data and orient the reader in the SCE. The two analysis tracks named at the end of tutorial 01 (pseudobulk, trajectory) both assume a clean, normalized object. Tutorial 02 produces it and is the shared prerequisite for both tracks.</p>
+<p>Tutorial 00 sets up the toolchain; tutorial 01 loads data and orients the reader in the SCE. The two analysis tracks named at the end of tutorial 01 (pseudobulk, trajectory) both assume a clean, normalized object. Tutorial 02 produces it and is the shared prerequisite for both tracks.</p>
 </section>
 <section id="preprocessing" class="level2">
 <h2 class="anchored" data-anchor-id="preprocessing">02 — Preprocessing</h2>
@@ -237,18 +241,18 @@ ul.task-list li input[type="checkbox"] {
 <p>Aggregate <strong>one</strong> donor’s single cells into per-cell-type pseudobulk profiles. Deliberately single-donor: it reuses the donor already downloaded in tutorial 01 (<code>H20.33.001</code>), runs in ~a minute, and produces a clean, always-working deliverable (a genes × cell-type count table). The core teaching point is the unit of replication / pseudoreplication argument that motivates summing to the donor level. Scaling the same step across a whole cohort is posed as the closing autonomous exercise (choose a balanced cohort from the SEA-AD donor metadata, loop <code>load_donor</code> + <code>aggregateAcrossCells</code>, <code>cbind</code> on common genes) — that cohort matrix is the input to tutorial 04.</p>
 <p><em>Built:</em> <code>schard</code> load + tutorial-02 QC wrapped in <code>load_donor</code> → per-<code>Subclass</code> aggregation (<code>aggregateAcrossCells</code>) → save to <code>outputs/</code>. Packages: <code>schard</code>, <code>SingleCellExperiment</code>, <code>scuttle</code> (no <code>edgeR</code> here).</p>
 </section>
-<section id="pseudobulk-differential-expression-planned" class="level3">
-<h3 class="anchored" data-anchor-id="pseudobulk-differential-expression-planned">04 — Pseudobulk differential expression (Planned)</h3>
+<section id="pseudobulk-differential-expression-done" class="level3">
+<h3 class="anchored" data-anchor-id="pseudobulk-differential-expression-done">04 — Pseudobulk differential expression (Done)</h3>
 <p>Take the stacked multi-donor pseudobulk (the 03a scale-up exercise), pick a cell type, and run an <code>edgeR</code> quasi-likelihood test for genes that change between low- and high-pathology donors, adjusting for sex. Structured as <strong>core demo → open extensions</strong> so students own the scientific decisions (cell type, contrast, covariates, interpretation), not just parameter tweaks.</p>
-<p><em>Sketch:</em> load cohort pseudobulk → filter (<code>filterByExpr</code>) / TMM (<code>calcNormFactors</code>) / <code>glmQLFit</code> + <code>glmQLFTest</code> → <code>topTags</code> / <code>decideTests</code>, MA/volcano → interpret with caveats.</p>
-<p><strong>Key finding to design around (already tested on a 20-donor PFC cohort):</strong> a class-scale binary ADNC contrast yields <strong>no genome-wide-significant genes in any cell type</strong> — confirmed across binary low/high, extremes (<code>Not AD</code> vs <code>High</code>), and Braak-stage-as-continuous designs (closest was Pvalb interneurons, min FDR ≈ 0.05). This is expected — SEA-AD’s own significant hits lean on MTG, the full 84-donor cohort, and their continuous pseudo-progression score. So tutorial 04 should <strong>treat the null as the payoff</strong>, not a bug: the honest lesson is that class-sized cohorts are underpowered, and the open extensions (more donors, MTG vs PFC, a continuous severity score, interpreting near-hits) are where students go looking for signal.</p>
-<p><strong>Data-handoff decision (open):</strong> the full 20-donor pseudobulk object is only ~27 MB as an RDS, small enough to commit to <code>data/example/</code> so tutorial 04 runs top-to-bottom without the ~11 GB download. For now we are <strong>not</strong> committing it; revisit when 04 is drafted (commit the object vs.&nbsp;have 04’s setup regenerate it from the 03a scale-up loop).</p>
-<p><strong>Cohort used for the above test (a candidate 03a-scale-up answer key):</strong> 20 PFC donors, 10 low / 10 high ADNC, 5 F + 5 M per group, all RIN ≥ 8.3, focus cell type astrocyte (min ~140 nuclei/donor). Residual confound: ~9-year age gap (low median 82.5 vs high 91.5), which 04 can address by adding age to the model.</p>
+<p><em>Built:</em> load cohort pseudobulk → pick cell type + <code>ncells &gt;= 10</code> filter → binary low/high ADNC contrast with a sex-adjusted design → <code>filterByExpr</code> / TMM (<code>normLibSizes</code>, the current name for <code>calcNormFactors</code>) / <code>estimateDisp</code> / <code>glmQLFit</code> + <code>glmQLFTest</code> → <code>topTags</code> / <code>decideTests</code>, MA + volcano → <strong>null as the payoff</strong> → frontier extensions (more donors, continuous severity, age, MTG vs PFC, reading near-misses). Packages: <code>edgeR</code> (+ <code>limma</code>), <code>SingleCellExperiment</code>.</p>
+<p><strong>The null was re-confirmed when 04 was drafted</strong> on the committed 20-donor PFC cohort: astrocyte, <code>Immune</code> (microglia), and <code>Pvalb</code> all give <strong>min FDR = 1, zero genes at FDR &lt; 0.05</strong> under the binary contrast; top-ranked astrocyte genes are unannotated loci with no coherent biology (a textbook null). Diagnostics were clean (balanced 5F+5M × 10 low/10 high, norm factors 0.86–1.13). Expected — SEA-AD’s own hits lean on MTG, the full 84-donor cohort, and their continuous pseudo-progression score; the tutorial treats the null as the honest lesson that class-sized cohorts are underpowered. (The Pvalb near-hit, min FDR ≈ 0.05, was under a <em>continuous Braak</em> design, not this binary one — posed in 04 as the “use the gradient” frontier lever.)</p>
+<p><strong>Data-handoff decision (resolved — hybrid):</strong> 04 loads the reader’s own <code>outputs/pseudobulk_cohort.rds</code> (the 03a scale-up output) as the headline path, and a committed ~28 MB copy at <code>data/example/pseudobulk_cohort.rds</code> is the fallback so 04 runs top-to-bottom without the ~11 GB download. The committed object is genes × donor-cell-type summed UMI counts, derived purely from public per-donor <code>.h5ad</code> files (documented in <code>data/README.md</code>).</p>
+<p><strong>Cohort committed (the 03a-scale-up answer key):</strong> 20 PFC donors, 10 low / 10 high ADNC, 5 F + 5 M per group, all RIN ≥ 8.3; demo cell type astrocyte. Residual confound: ~9-year age gap, which 04’s frontier addresses by adding age to the model.</p>
 </section>
-<section id="b-trajectory-track" class="level3">
-<h3 class="anchored" data-anchor-id="b-trajectory-track">03b — Trajectory track</h3>
-<p>On a single chosen cell type, use the PCA/UMAP from tutorial 02 to fit a <code>slingshot</code> trajectory, anchoring it in low-pathology cells, and interpret the inferred progression against the pathology axis.</p>
-<p><em>Sketch:</em> subset one cell type → embedding from tutorial 02 → <code>slingshot</code> lineage/pseudotime with a defined starting cluster → interpret against the continuous pathology score. Package and data requirements to be pinned when drafted.</p>
+<section id="b-trajectory-track-done" class="level3">
+<h3 class="anchored" data-anchor-id="b-trajectory-track-done">03b — Trajectory track (Done)</h3>
+<p>Fit a pseudotime through the <strong>oligodendrocyte lineage</strong> (OPCs → mature oligodendrocytes) of the single donor from tutorials 01–02, reloading the preprocessed object saved at the end of tutorial 02. The teaching point is a continuous process <em>within</em> one cell type, as the deliberate contrast to 03a’s discrete group comparison — and that pseudotime’s <strong>direction is imposed, not discovered</strong>, so the reader must supply the biology (marker genes) that says which end is the start.</p>
+<p><em>Built:</em> reload <code>outputs/sce_preprocessed.rds</code> → subset the OPC + oligodendrocyte lineage → <strong>re-embed the lineage on its own</strong> (its own HVGs/PCA/UMAP, because the global embedding is the wrong space for within-lineage structure) → cluster and pick a start cluster from an OPC marker → <code>slingshot</code> lineage/pseudotime → rank genes by Spearman correlation with pseudotime (myelin genes rise, OPC genes fall) → save to <code>outputs/</code>. Packages: <code>slingshot</code> (plus the tutorial-02 stack). The pathology comparison is posed as the closing frontier exercise, not the core.</p>
 </section>
 </section>
 <section id="open-questions" class="level2">

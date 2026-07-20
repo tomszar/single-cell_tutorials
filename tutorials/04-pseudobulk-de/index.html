@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="IPRE Winter 2026 · MOTCO · research line IPI-26-1206">
+
+<title>Pseudobulk differential expression – Single-cell analysis tutorials</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../../">
+<script src="../../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../../site_libs/quarto-html/popper.min.js"></script>
+<script src="../../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../../site_libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../../site_libs/bootstrap/bootstrap-e7099dccd2c64493c1fb02673752d9e1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+</head>
+
+<body class="nav-fixed quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="../../index.html">
+    <span class="navbar-title">Single-cell analysis tutorials</span>
+    </a>
+  </div>
+            <div id="quarto-search" class="" title="Search"></div>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" role="menu" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+  <span class="navbar-toggler-icon"></span>
+</button>
+          <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav navbar-nav-scroll me-auto">
+  <li class="nav-item">
+    <a class="nav-link" href="../../index.html"> 
+<span class="menu-text">Home</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../tutorials/00-setup/index.html"> 
+<span class="menu-text">00: Setup</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../tutorials/01-read-h5ad/index.html"> 
+<span class="menu-text">01: Read H5AD</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../tutorials/02-preprocessing/index.html"> 
+<span class="menu-text">02: Preprocessing</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../tutorials/03a-pseudobulk/index.html"> 
+<span class="menu-text">03a: Pseudobulk generation</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link" href="../../tutorials/03b-trajectory/index.html"> 
+<span class="menu-text">03b: Trajectory</span></a>
+  </li>  
+  <li class="nav-item">
+    <a class="nav-link active" href="../../tutorials/04-pseudobulk-de/index.html" aria-current="page"> 
+<span class="menu-text">04: Pseudobulk DE</span></a>
+  </li>  
+</ul>
+          </div> <!-- /navcollapse -->
+            <div class="quarto-navbar-tools">
+</div>
+      </div> <!-- /container-fluid -->
+    </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#learning-objectives" id="toc-learning-objectives" class="nav-link active" data-scroll-target="#learning-objectives">Learning objectives</a></li>
+  <li><a href="#step-1-install-the-r-packages" id="toc-step-1-install-the-r-packages" class="nav-link" data-scroll-target="#step-1-install-the-r-packages">Step 1 — Install the R packages</a></li>
+  <li><a href="#step-2-load-the-cohort-pseudobulk" id="toc-step-2-load-the-cohort-pseudobulk" class="nav-link" data-scroll-target="#step-2-load-the-cohort-pseudobulk">Step 2 — Load the cohort pseudobulk</a></li>
+  <li><a href="#step-3-pick-a-cell-type-and-subset" id="toc-step-3-pick-a-cell-type-and-subset" class="nav-link" data-scroll-target="#step-3-pick-a-cell-type-and-subset">Step 3 — Pick a cell type and subset</a></li>
+  <li><a href="#step-4-define-the-contrast-and-the-design" id="toc-step-4-define-the-contrast-and-the-design" class="nav-link" data-scroll-target="#step-4-define-the-contrast-and-the-design">Step 4 — Define the contrast and the design</a></li>
+  <li><a href="#step-5-build-the-dgelist-and-filter-low-count-genes" id="toc-step-5-build-the-dgelist-and-filter-low-count-genes" class="nav-link" data-scroll-target="#step-5-build-the-dgelist-and-filter-low-count-genes">Step 5 — Build the <code>DGEList</code> and filter low-count genes</a></li>
+  <li><a href="#step-6-normalize-for-composition-tmm" id="toc-step-6-normalize-for-composition-tmm" class="nav-link" data-scroll-target="#step-6-normalize-for-composition-tmm">Step 6 — Normalize for composition (TMM)</a></li>
+  <li><a href="#step-7-estimate-dispersion-and-fit-the-quasi-likelihood-model" id="toc-step-7-estimate-dispersion-and-fit-the-quasi-likelihood-model" class="nav-link" data-scroll-target="#step-7-estimate-dispersion-and-fit-the-quasi-likelihood-model">Step 7 — Estimate dispersion and fit the quasi-likelihood model</a></li>
+  <li><a href="#step-8-read-the-results" id="toc-step-8-read-the-results" class="nav-link" data-scroll-target="#step-8-read-the-results">Step 8 — Read the results</a></li>
+  <li><a href="#step-9-visualize-ma-and-volcano-plots" id="toc-step-9-visualize-ma-and-volcano-plots" class="nav-link" data-scroll-target="#step-9-visualize-ma-and-volcano-plots">Step 9 — Visualize: MA and volcano plots</a></li>
+  <li><a href="#step-10-when-the-answer-is-nothing-significant" id="toc-step-10-when-the-answer-is-nothing-significant" class="nav-link" data-scroll-target="#step-10-when-the-answer-is-nothing-significant">Step 10 — When the answer is “nothing significant”</a></li>
+  <li><a href="#step-11-save-the-results" id="toc-step-11-save-the-results" class="nav-link" data-scroll-target="#step-11-save-the-results">Step 11 — Save the results</a></li>
+  <li><a href="#sec-frontier" id="toc-sec-frontier" class="nav-link" data-scroll-target="#sec-frontier">Step 12 — Your frontier</a></li>
+  <li><a href="#what-you-produced" id="toc-what-you-produced" class="nav-link" data-scroll-target="#what-you-produced">What you produced</a></li>
+  <li><a href="#where-this-connects" id="toc-where-this-connects" class="nav-link" data-scroll-target="#where-this-connects">Where this connects</a></li>
+  <li><a href="#if-something-breaks" id="toc-if-something-breaks" class="nav-link" data-scroll-target="#if-something-breaks">If something breaks</a></li>
+  </ul>
+</nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Pseudobulk differential expression</h1>
+<p class="subtitle lead">Testing which genes change with Alzheimer’s pathology across a cohort of donors</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>IPRE Winter 2026 · MOTCO · research line IPI-26-1206 </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p><a href="../../tutorials/03a-pseudobulk/index.html">Tutorial 03a</a> built the right <em>unit</em> for comparing people: one summed count profile per cell type per donor, and its closing exercise stacked many donors into a cohort matrix. This tutorial finally asks the question the whole pseudobulk track was built for: <strong>which genes change between low- and high-pathology donors?</strong> That is <em>differential expression</em> (DE), and now that each donor is one independent replicate, it is exactly the problem the bulk RNA-seq toolkit was designed for.</p>
+<p>We run the standard <code>edgeR</code> quasi-likelihood workflow on one cell type, treating the donor as the replicate and pathology as the condition, and adjusting for sex. The mechanics are fully scaffolded. The <em>result</em>, though, is where this tutorial is honest with you: at a class-sized cohort (~20 donors), a binary pathology contrast in prefrontal cortex finds <strong>no genome-wide-significant genes</strong>. That is not a bug to fix. It is the lesson: how much a real answer costs, why a null is a legitimate finding, and where you would go looking for signal. The scientific decisions — cell type, contrast, covariates, how far to trust a near-miss — are left to you.</p>
+<section id="learning-objectives" class="level2">
+<h2 class="anchored" data-anchor-id="learning-objectives">Learning objectives</h2>
+<p>By the end of this tutorial you should be able to:</p>
+<ul>
+<li>Set up a pseudobulk DE analysis: pick a cell type, define a two-group contrast from donor metadata, and build a <strong>design matrix</strong> that adjusts for a confounder.</li>
+<li>Run the <code>edgeR</code> quasi-likelihood pipeline end to end: <code>filterByExpr</code>, TMM normalization (<code>normLibSizes</code>), dispersion estimation, <code>glmQLFit</code>, <code>glmQLFTest</code>.</li>
+<li>Read the output — <code>topTags</code>, <code>decideTests</code>, an MA plot, a volcano — and tell a significant result from a null one.</li>
+<li>Explain why a class-scale cohort is <strong>underpowered</strong> for this contrast, and why reporting a null honestly beats manufacturing hits.</li>
+<li>Name the levers (more donors, brain region, a continuous severity score) that turn an underpowered design into one that can detect real change.</li>
+</ul>
+<p><strong>Prerequisites:</strong> tutorials 00–03a. This tutorial consumes the <strong>cohort pseudobulk matrix</strong> you build in <a href="../../tutorials/03a-pseudobulk/index.html#sec-scaleup">tutorial 03a’s scale-up exercise</a> (<code>outputs/pseudobulk_cohort.rds</code>). If you have not built it, Step 2 shows a ready-made copy you can load instead so this tutorial still runs top to bottom.</p>
+<p><strong>Expected outcome:</strong> a ranked DE table for one cell type across the pathology contrast, the diagnostic plots that go with it, a defensible read of a null result, and a saved results object in <code>outputs/</code>.</p>
+</section>
+<section id="step-1-install-the-r-packages" class="level2">
+<h2 class="anchored" data-anchor-id="step-1-install-the-r-packages">Step 1 — Install the R packages</h2>
+<p>The pseudobulk generation in 03a needed no DE tool; here it enters. <code>edgeR</code> (with <code>limma</code>, which it depends on) is the whole new requirement. <code>SingleCellExperiment</code> is already in hand from the earlier tutorials for holding the pseudobulk object.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">requireNamespace</span>(<span class="st">"BiocManager"</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>)) {</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">install.packages</span>(<span class="st">"BiocManager"</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>BiocManager<span class="sc">::</span><span class="fu">install</span>(<span class="fu">c</span>(<span class="st">"edgeR"</span>, <span class="st">"SingleCellExperiment"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>If you are on the Nix dev shell, these are already built, so you do not need to run <code>BiocManager::install</code>.</p>
+</section>
+<section id="step-2-load-the-cohort-pseudobulk" class="level2">
+<h2 class="anchored" data-anchor-id="step-2-load-the-cohort-pseudobulk">Step 2 — Load the cohort pseudobulk</h2>
+<p>Set R’s working directory to this tutorial’s folder (<strong>Session &gt; Set Working Directory &gt; To Source File Location</strong> in RStudio) and load the stacked cohort matrix from 03a. Its columns are <strong>donor × cell type</strong>: one column per (donor, <code>Subclass</code>) pair, carrying the donor-level metadata (<code>Donor ID</code>, <code>Sex</code>, ADNC pathology grade) that the aggregation preserved.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(SingleCellExperiment)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>pb <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">"../../outputs/pseudobulk_cohort.rds"</span>)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>pb</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># One row per donor: the pathology grade and sex we will model on. Keep</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co"># check.names = FALSE so the spaced column names ("Donor ID") survive intact.</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>meta_cols  <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Donor ID"</span>, <span class="st">"Overall AD neuropathological Change"</span>, <span class="st">"Sex"</span>)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>donor_meta <span class="ot">&lt;-</span> <span class="fu">unique</span>(<span class="fu">as.data.frame</span>(<span class="fu">colData</span>(pb)[, meta_cols], <span class="at">check.names =</span> <span class="cn">FALSE</span>))</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>donor_meta</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(donor_meta<span class="sc">$</span><span class="st">`</span><span class="at">Overall AD neuropathological Change</span><span class="st">`</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Didn't build the cohort in 03a? Load the ready-made copy">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Didn’t build the cohort in 03a? Load the ready-made copy
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Building the cohort matrix in <a href="../../tutorials/03a-pseudobulk/index.html#sec-scaleup">03a</a> requires downloading ~11 GB of donor files, which is a lot for one class session. So a small (~28 MB) ready-made copy of exactly that object — the 20-donor PFC cohort described below — ships with the repository. If <code>outputs/pseudobulk_cohort.rds</code> does not exist, load that instead and read on:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>pb <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(<span class="st">"../../data/example/pseudobulk_cohort.rds"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The headline path is still “use what you built in 03a”; this is only so nobody is stranded.</p>
+</div>
+</div>
+<p>The cohort here is <strong>20 SEA-AD prefrontal-cortex donors</strong>, chosen (as 03a’s exercise asks) to span pathology while staying balanced on the obvious confounds: 10 <strong>low</strong> (<code>Not AD</code> / <code>Low</code> ADNC) and 10 <strong>high</strong> (<code>Intermediate</code> / <code>High</code>), 5 female + 5 male in each group, all with good RNA quality (RIN ≥ 8.3). Balance is what lets us attribute a difference to pathology rather than to sex or bad RNA.</p>
+</section>
+<section id="step-3-pick-a-cell-type-and-subset" class="level2">
+<h2 class="anchored" data-anchor-id="step-3-pick-a-cell-type-and-subset">Step 3 — Pick a cell type and subset</h2>
+<p>DE is run <strong>one cell type at a time</strong>: astrocytes are compared to astrocytes, microglia to microglia. Different cell types have different baseline programs, and pathology may touch each differently; pooling them would just blur those signals together. We demonstrate with <strong>astrocytes</strong> — abundant in every donor (so the profiles are deep), and biologically central to the disease (reactive astrocytes are a hallmark of Alzheimer’s). You will change this in the frontier exercises.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>cell_type <span class="ot">&lt;-</span> <span class="st">"Astrocyte"</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Keep only this cell type's columns, and drop any donor whose profile was summed</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># from too few cells to trust (the ncells &gt;= 10 rule flagged in 03a).</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>pb_ct <span class="ot">&lt;-</span> pb[, pb<span class="sc">$</span>Subclass <span class="sc">==</span> cell_type <span class="sc">&amp;</span> pb<span class="sc">$</span>ncells <span class="sc">&gt;=</span> <span class="dv">10</span>]</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>pb_ct</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="fu">sort</span>(pb_ct<span class="sc">$</span>ncells)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Every donor should survive the <code>ncells</code> filter for a common type like astrocytes; for a rare type it might drop a few, shrinking an already small cohort — itself a useful thing to notice.</p>
+</section>
+<section id="step-4-define-the-contrast-and-the-design" class="level2">
+<h2 class="anchored" data-anchor-id="step-4-define-the-contrast-and-the-design">Step 4 — Define the contrast and the design</h2>
+<p>This is the first genuinely <em>scientific</em> step, and the one the tool cannot make for you. Two decisions:</p>
+<ol type="1">
+<li><strong>The contrast.</strong> SEA-AD grades each donor’s <strong>Overall AD neuropathological Change (ADNC)</strong> as <code>Not AD</code>, <code>Low</code>, <code>Intermediate</code>, or <code>High</code>. We collapse these into a binary <strong>low vs high</strong> split. That is a choice — it treats a graded process as two boxes and throws away the ordering — and the frontier revisits it.</li>
+<li><strong>The covariates.</strong> Sex differs cell by cell in expression and could correlate with group if the cohort were unbalanced; we adjust for it by putting it in the model. The cohort is <em>designed</em> to be sex-balanced, so this is insurance, not rescue.</li>
+</ol>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Binary pathology from ADNC.</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>adnc <span class="ot">&lt;-</span> pb_ct<span class="sc">$</span><span class="st">`</span><span class="at">Overall AD neuropathological Change</span><span class="st">`</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>pathology <span class="ot">&lt;-</span> <span class="fu">factor</span>(<span class="fu">ifelse</span>(adnc <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">"Not AD"</span>, <span class="st">"Low"</span>), <span class="st">"low"</span>, <span class="st">"high"</span>),</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>                    <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"low"</span>, <span class="st">"high"</span>))</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>sex <span class="ot">&lt;-</span> <span class="fu">factor</span>(pb_ct<span class="sc">$</span>Sex)</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Check the design is balanced before trusting any test built on it.</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(pathology)</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(sex, pathology)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The design matrix encodes “model each gene as sex + pathology.” With <code>low</code> as the reference level, the <code>pathologyhigh</code> coefficient is exactly what we test: the average log-fold change from low to high pathology, holding sex fixed.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>design <span class="ot">&lt;-</span> <span class="fu">model.matrix</span>(<span class="sc">~</span> sex <span class="sc">+</span> pathology)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>design</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="callout callout-style-default callout-important callout-titled" title="A covariate you cannot add here: age">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>A covariate you cannot add here: age
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>High-pathology donors are, on average, older than low-pathology ones — pathology and age are entangled in the population, and this cohort carries a residual age gap (~9 years). You could add <code>Age at Death</code> to the model (<code>~ sex + age + pathology</code>) to adjust for it. We leave it out of the core demo to keep the model simple, but adding it is one of the frontier exercises — and a genuinely defensible modeling choice, not a nuisance.</p>
+</div>
+</div>
+</section>
+<section id="step-5-build-the-dgelist-and-filter-low-count-genes" class="level2">
+<h2 class="anchored" data-anchor-id="step-5-build-the-dgelist-and-filter-low-count-genes">Step 5 — Build the <code>DGEList</code> and filter low-count genes</h2>
+<p><code>edgeR</code> works on a <code>DGEList</code>: the count matrix plus per-sample library sizes. Most genes are barely detected in any donor and carry no usable signal; testing them only worsens the multiple-testing burden. <code>filterByExpr</code> drops them using the design, keeping genes expressed at a workable level in a large enough subgroup.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(edgeR)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>y <span class="ot">&lt;-</span> <span class="fu">DGEList</span>(<span class="at">counts =</span> <span class="fu">assay</span>(pb_ct, <span class="st">"counts"</span>))</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>keep <span class="ot">&lt;-</span> <span class="fu">filterByExpr</span>(y, design)</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>y <span class="ot">&lt;-</span> y[keep, , keep.lib.sizes <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(keep)   <span class="co"># how many genes survive</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>You go from the full feature set (~36,600 genes) down to the expressed ones — about 20,000 for astrocytes here, fewer for rarer or shallower cell types. Filtering on the design (not a flat count cutoff) is what keeps a gene expressed in only one group from being discarded.</p>
+</section>
+<section id="step-6-normalize-for-composition-tmm" class="level2">
+<h2 class="anchored" data-anchor-id="step-6-normalize-for-composition-tmm">Step 6 — Normalize for composition (TMM)</h2>
+<p>Pseudobulk columns differ enormously in total counts — a donor with more astrocytes sums to a bigger library. Worse, if a handful of genes dominate one group, they can make <em>every other</em> gene look relatively lower there, a composition artifact. <code>normLibSizes</code> computes <strong>TMM</strong> normalization factors that correct for both, so comparisons are between genes’ <em>relative</em> abundances, not library sizes.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>y <span class="ot">&lt;-</span> <span class="fu">normLibSizes</span>(y)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>y<span class="sc">$</span>samples</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The <code>norm.factors</code> column should sit near 1 (for this cohort they range about 0.8–1.2). A factor far from 1 flags a donor with an unusual composition — worth a look, not automatically a problem.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="`normLibSizes` vs. `calcNormFactors`">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span><code>normLibSizes</code> vs.&nbsp;<code>calcNormFactors</code>
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Recent <code>edgeR</code> renamed <code>calcNormFactors</code> to <code>normLibSizes</code>; the two are the same TMM computation. Older tutorials and the <code>edgeR</code> user’s guide still show <code>calcNormFactors</code>, which continues to work but now prints a rename message. Use <code>normLibSizes</code> to match current <code>edgeR</code>.</p>
+</div>
+</div>
+</section>
+<section id="step-7-estimate-dispersion-and-fit-the-quasi-likelihood-model" class="level2">
+<h2 class="anchored" data-anchor-id="step-7-estimate-dispersion-and-fit-the-quasi-likelihood-model">Step 7 — Estimate dispersion and fit the quasi-likelihood model</h2>
+<p>Count data is noisier than a Poisson model expects (biological variability between donors adds <em>overdispersion</em>), and with only ~20 donors we cannot estimate each gene’s variability from that gene alone. <code>edgeR</code> solves this by <strong>sharing information across genes</strong>: <code>estimateDisp</code> shrinks each gene’s dispersion toward a trend, and the <strong>quasi-likelihood</strong> F-test (<code>glmQLFit</code> + <code>glmQLFTest</code>) adds a second layer of shrinkage on top, which is what makes it well-calibrated for small sample sizes. This QL pipeline is the current <code>edgeR</code> recommendation for pseudobulk.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>y <span class="ot">&lt;-</span> <span class="fu">estimateDisp</span>(y, design)</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plotBCV</span>(y)   <span class="co"># biological coefficient of variation vs abundance</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">glmQLFit</span>(y, design)</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Test the pathology coefficient, holding sex fixed.</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">glmQLFTest</span>(fit, <span class="at">coef =</span> <span class="st">"pathologyhigh"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="step-8-read-the-results" class="level2">
+<h2 class="anchored" data-anchor-id="step-8-read-the-results">Step 8 — Read the results</h2>
+<p><code>topTags</code> ranks genes by evidence; <code>decideTests</code> counts how many pass a significance threshold after FDR correction.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>tt <span class="ot">&lt;-</span> <span class="fu">topTags</span>(res, <span class="at">n =</span> <span class="cn">Inf</span>)</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(tt<span class="sc">$</span>table, <span class="dv">15</span>)</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Genes significant at FDR &lt; 0.05, split by direction (up / not / down):</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(<span class="fu">decideTests</span>(res))</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="co"># The single strongest gene's adjusted p-value.</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="fu">min</span>(tt<span class="sc">$</span>table<span class="sc">$</span>FDR)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Each row is a gene: <code>logFC</code> (the low→high change, in log2 units), <code>PValue</code>, and <code>FDR</code> (the Benjamini–Hochberg adjusted p-value — the number to judge significance by, because we tested thousands of genes at once). A gene is a “hit” if its <code>FDR</code> is below your threshold, conventionally 0.05.</p>
+</section>
+<section id="step-9-visualize-ma-and-volcano-plots" class="level2">
+<h2 class="anchored" data-anchor-id="step-9-visualize-ma-and-volcano-plots">Step 9 — Visualize: MA and volcano plots</h2>
+<p>Two standard plots summarize a whole DE test at a glance. The <strong>MA plot</strong> shows log-fold change against average expression, with significant genes highlighted — <code>edgeR</code> draws it directly.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plotMD</span>(res)                      <span class="co"># MA plot; highlights DE genes if any pass FDR&lt;0.05</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">h =</span> <span class="dv">0</span>, <span class="at">col =</span> <span class="st">"grey"</span>, <span class="at">lty =</span> <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The <strong>volcano plot</strong> puts effect size (x) against evidence (y); real hits sit up and to the sides.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>tab <span class="ot">&lt;-</span> tt<span class="sc">$</span>table</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(tab<span class="sc">$</span>logFC, <span class="sc">-</span><span class="fu">log10</span>(tab<span class="sc">$</span>PValue),</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>     <span class="at">pch =</span> <span class="dv">16</span>, <span class="at">cex =</span> <span class="fl">0.4</span>, <span class="at">col =</span> <span class="st">"grey50"</span>,</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>     <span class="at">xlab =</span> <span class="st">"log2 fold change (high vs low)"</span>, <span class="at">ylab =</span> <span class="st">"-log10 p-value"</span>,</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>     <span class="at">main =</span> <span class="fu">paste</span>(cell_type, <span class="st">"— high vs low ADNC"</span>))</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">v =</span> <span class="dv">0</span>, <span class="at">col =</span> <span class="st">"grey"</span>, <span class="at">lty =</span> <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="step-10-when-the-answer-is-nothing-significant" class="level2">
+<h2 class="anchored" data-anchor-id="step-10-when-the-answer-is-nothing-significant">Step 10 — When the answer is “nothing significant”</h2>
+<p>Run the astrocyte analysis above and you will find <strong>no genes at FDR &lt; 0.05</strong> — in fact the smallest adjusted p-value is essentially 1, and the top-ranked genes are unannotated loci (<code>AP003778.1</code>, <code>LURAP1</code>, <code>TBX5</code>) with no coherent biology, exactly what a null looks like. The volcano is a symmetric cloud with nothing pushed to the top corners. Every diagnostic looked fine: the design was balanced (5 F + 5 M in each of 10 low / 10 high donors), normalization factors sat near 1, dispersions behaved. The pipeline worked; there is simply no signal it can call significant at this scale.</p>
+<p><strong>This is the real result, and it is not a failure.</strong> Three things to sit with:</p>
+<ul>
+<li><strong>A null is a finding.</strong> “No detectable genome-wide difference in astrocyte expression between low- and high-pathology donors <em>in this cohort</em>” is a true, reportable statement. The scientific error would be to keep tweaking until something crosses 0.05 and then report only that.</li>
+<li><strong>This design is underpowered, by construction.</strong> The donor is the replicate, so ~10 per group is a <em>small</em> experiment. A binary split discards the graded pathology information. And prefrontal cortex is affected relatively late in Alzheimer’s, so the between-group difference you are hunting is small to begin with. Small effect + few replicates + coarse contrast = little power.</li>
+<li><strong>We know signal exists at larger scale.</strong> SEA-AD’s own published DE hits lean on the <em>middle temporal gyrus</em> (hit earlier and harder than PFC), the <em>full 84-donor cohort</em>, and a <em>continuous</em> pseudo-progression score rather than a binary grade. Change those levers and genes appear. The null here is a statement about <em>this cohort and this contrast</em>, not about the biology.</li>
+</ul>
+<div class="callout callout-style-default callout-note callout-titled" title="Try before you believe the null is inevitable">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Try before you believe the null is inevitable
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Swap <code>cell_type</code> to <code>"Immune"</code> (SEA-AD’s label for microglia) or <code>"Pvalb"</code> interneurons and rerun Steps 3–8. The result stays null — min FDR ≈ 1, zero hits — for these too. Seeing the null hold across cell types is what turns “maybe I picked a bad cell type” into “this cohort and contrast are underpowered.” (A <em>continuous</em> severity model, in the frontier below, is where an interneuron subtype came closest to significance in our own testing — a hint about which lever matters most.)</p>
+</div>
+</div>
+</section>
+<section id="step-11-save-the-results" class="level2">
+<h2 class="anchored" data-anchor-id="step-11-save-the-results">Step 11 — Save the results</h2>
+<p>Save the ranked table so you can reload it, compare cell types, or plot without refitting. <code>outputs/</code> is git-ignored.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">saveRDS</span>(tt<span class="sc">$</span>table, <span class="fu">sprintf</span>(<span class="st">"../../outputs/de_%s.rds"</span>, cell_type))</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(tt<span class="sc">$</span>table, <span class="fu">sprintf</span>(<span class="st">"../../outputs/de_%s.csv"</span>, cell_type))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="sec-frontier" class="level2">
+<h2 class="anchored" data-anchor-id="sec-frontier">Step 12 — Your frontier</h2>
+<p>The pipeline above is the scaffolding. The open questions below are the analysis, and — as in the trajectory track — several have no tidy answer. This is where you own the science.</p>
+<div class="callout callout-style-default callout-tip callout-titled" title="Required — go looking for the power you're missing">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Required — go looking for the power you’re missing
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The core demo is underpowered. Change the levers, one at a time, and watch what moves:</p>
+<ol type="1">
+<li><strong>Add donors.</strong> The donor is the replicate, so more donors is the most direct route to power. Extend 03a’s scale-up loop to a larger cohort (keep it balanced) and rerun. How many donors does it take before <em>anything</em> crosses FDR &lt; 0.05?</li>
+<li><strong>Use the gradient, not a box.</strong> Instead of binary low/high, model pathology as a continuous or ordinal score. SEA-AD provides <strong>Braak stage</strong> and a <strong>continuous pseudo-progression score</strong>; treating severity as a number rather than two bins recovers information a median split throws away.</li>
+<li><strong>Adjust for age.</strong> Add <code>Age at Death</code> to the design (<code>~ sex + age + pathology</code>) to separate pathology from the age it is confounded with. Does the ranking change? Does anything get closer to significant?</li>
+</ol>
+</div>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled" title="Optional / advanced — region, and interpreting near-misses">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Optional / advanced — region, and interpreting near-misses
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li><strong>Brain region.</strong> SEA-AD’s strongest signals are in the <strong>middle temporal gyrus (MTG)</strong>, hit earlier in the disease than PFC. The <code>MTG/RNAseq/</code> files load exactly like the PFC ones (tutorial 01). Does the same contrast, same cell type, in MTG yield hits where PFC gave none?</li>
+<li><strong>Read the near-misses honestly.</strong> Even with nothing at FDR &lt; 0.05, the top-ranked genes are a hypothesis-generating list — <em>if</em> you treat them as such. Are the top astrocyte genes plausibly reactive-astrocyte genes (<code>GFAP</code>, <code>VIM</code>, complement genes)? A biologically coherent top-of-list is suggestive; a random one says the ranking is noise. Which is it here?</li>
+<li><strong>The multiple-cell-type burden.</strong> Testing every cell type multiplies your comparisons. How would you correct for having run the same test in a dozen subclasses?</li>
+</ul>
+<p>There is no answer key. A defensible null, clearly reported, is a complete result.</p>
+</div>
+</div>
+</section>
+<section id="what-you-produced" class="level2">
+<h2 class="anchored" data-anchor-id="what-you-produced">What you produced</h2>
+<ul>
+<li>A full pseudobulk DE analysis for one cell type: contrast, design with a covariate, <code>filterByExpr</code> / TMM / quasi-likelihood test, ranked table and diagnostic plots, saved to <code>outputs/</code>.</li>
+<li>A worked example of an <strong>honest null</strong> at class scale, and a clear map of the levers (donors, region, continuous severity, age) that change it.</li>
+</ul>
+</section>
+<section id="where-this-connects" class="level2">
+<h2 class="anchored" data-anchor-id="where-this-connects">Where this connects</h2>
+<ul>
+<li>This closes the <strong>pseudobulk track</strong>: <a href="../../tutorials/03a-pseudobulk/index.html">03a</a> built the donor-level unit and stacked the cohort; 04 tested it. The through-line was <em>the donor is the unit of replication</em> — from why you sum cells to why ~10 donors per group is a small experiment.</li>
+<li>The other track, <a href="../../tutorials/03b-trajectory/index.html">trajectory</a>, asked a different question of the same data — ordering <em>cells</em> along a continuum rather than comparing <em>groups</em> of donors — and, like this one, ended at a real open frontier (does maturation shift with pathology?) rather than a packaged answer.</li>
+</ul>
+</section>
+<section id="if-something-breaks" class="level2">
+<h2 class="anchored" data-anchor-id="if-something-breaks">If something breaks</h2>
+<div class="callout callout-style-default callout-warning callout-titled" title="`readRDS` can't find `pseudobulk_cohort.rds`">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span><code>readRDS</code> can’t find <code>pseudobulk_cohort.rds</code>
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>This tutorial consumes the cohort matrix from <a href="../../tutorials/03a-pseudobulk/index.html#sec-scaleup">03a’s scale-up exercise</a>. Either run that exercise (it writes <code>outputs/pseudobulk_cohort.rds</code>), or load the ready-made copy shipped at <code>../../data/example/pseudobulk_cohort.rds</code> (Step 2 callout).</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-warning callout-titled" title="A cell type has very few donors after the `ncells` filter">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span>A cell type has very few donors after the <code>ncells</code> filter
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Rare cell types are summed from few nuclei in some donors, and the <code>ncells &gt;= 10</code> filter in Step 3 can drop those donors, shrinking the cohort until the test is meaningless. Check <code>table(pathology)</code> after subsetting: if a group is down to a handful of donors, that cell type is too rare for DE in this cohort — a finding about the data, not an error to code around.</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-warning callout-titled" title="`filterByExpr` or the fit warns about the design">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Warning</span><code>filterByExpr</code> or the fit warns about the design
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>If <code>model.matrix</code> produced a column that is all zeros or perfectly collinear (for example, a cohort that turned out not to be sex-balanced after the <code>ncells</code> filter), the fit is not identifiable. Reprint <code>table(sex, pathology)</code> and confirm every combination is present; drop a covariate you cannot support before refitting.</p>
+</div>
+</div>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/tomszar\.github\.io\/single-cell_tutorials\/");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
