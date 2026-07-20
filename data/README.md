@@ -23,3 +23,10 @@ redistributable files used by the tutorials may be placed in `example/`.
   `..._SEAAD_DFC_RNAseq_final-nuclei.<date>.h5ad` per-donor objects; a 20-donor
   cohort is ~11 GB, git-ignored.
 - `example/` — small, redistributable derived data checked into the repo.
+  - `pseudobulk_cohort.rds` — the stacked 20-donor PFC pseudobulk matrix
+    (genes × donor-cell-type summed UMI counts, ~27 MB) that tutorial 03a's
+    scale-up exercise produces. Tutorial 04 (differential expression) loads the
+    reader's own `outputs/pseudobulk_cohort.rds` by preference; this committed
+    copy is the fallback so 04 runs top-to-bottom without the ~11 GB of donor
+    downloads. Derived purely from the public per-donor `.h5ad` objects (no
+    restricted data); regenerate with the 03a loop over the 20-donor cohort.

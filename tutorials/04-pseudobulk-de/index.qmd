@@ -1,0 +1,426 @@
+---
+title: "Pseudobulk differential expression"
+subtitle: "Testing which genes change with Alzheimer's pathology across a cohort of donors"
+author:
+  - name: "IPRE Winter 2026 · MOTCO · research line IPI-26-1206"
+format:
+  html:
+    toc: true
+    code-copy: true
+execute:
+  eval: false
+---
+
+[Tutorial 03a](../03a-pseudobulk/index.qmd) built the right *unit* for comparing
+people: one summed count profile per cell type per donor, and its closing
+exercise stacked many donors into a cohort matrix. This tutorial finally asks the
+question the whole pseudobulk track was built for: **which genes change between
+low- and high-pathology donors?** That is *differential expression* (DE), and now
+that each donor is one independent replicate, it is exactly the problem the bulk
+RNA-seq toolkit was designed for.
+
+We run the standard `edgeR` quasi-likelihood workflow on one cell type, treating
+the donor as the replicate and pathology as the condition, and adjusting for sex.
+The mechanics are fully scaffolded. The *result*, though, is where this tutorial
+is honest with you: at a class-sized cohort (~20 donors), a binary pathology
+contrast in prefrontal cortex finds **no genome-wide-significant genes**. That is
+not a bug to fix. It is the lesson: how much a real answer costs, why a null is a
+legitimate finding, and where you would go looking for signal. The scientific
+decisions — cell type, contrast, covariates, how far to trust a near-miss — are
+left to you.
+
+## Learning objectives
+
+By the end of this tutorial you should be able to:
+
+- Set up a pseudobulk DE analysis: pick a cell type, define a two-group contrast
+  from donor metadata, and build a **design matrix** that adjusts for a confounder.
+- Run the `edgeR` quasi-likelihood pipeline end to end: `filterByExpr`,
+  TMM normalization (`normLibSizes`), dispersion estimation, `glmQLFit`,
+  `glmQLFTest`.
+- Read the output — `topTags`, `decideTests`, an MA plot, a volcano — and tell a
+  significant result from a null one.
+- Explain why a class-scale cohort is **underpowered** for this contrast, and why
+  reporting a null honestly beats manufacturing hits.
+- Name the levers (more donors, brain region, a continuous severity score) that
+  turn an underpowered design into one that can detect real change.
+
+**Prerequisites:** tutorials 00–03a. This tutorial consumes the **cohort
+pseudobulk matrix** you build in [tutorial 03a's scale-up exercise](../03a-pseudobulk/index.qmd#sec-scaleup)
+(`outputs/pseudobulk_cohort.rds`). If you have not built it, Step 2 shows a
+ready-made copy you can load instead so this tutorial still runs top to bottom.
+
+**Expected outcome:** a ranked DE table for one cell type across the pathology
+contrast, the diagnostic plots that go with it, a defensible read of a null
+result, and a saved results object in `outputs/`.
+
+## Step 1 — Install the R packages
+
+The pseudobulk generation in 03a needed no DE tool; here it enters. `edgeR`
+(with `limma`, which it depends on) is the whole new requirement. `SingleCellExperiment`
+is already in hand from the earlier tutorials for holding the pseudobulk object.
+
+```{r}
+if (!requireNamespace("BiocManager", quietly = TRUE)) {
+  install.packages("BiocManager")
+}
+BiocManager::install(c("edgeR", "SingleCellExperiment"))
+```
+
+If you are on the Nix dev shell, these are already built, so you do not need to
+run `BiocManager::install`.
+
+## Step 2 — Load the cohort pseudobulk
+
+Set R's working directory to this tutorial's folder (**Session > Set Working
+Directory > To Source File Location** in RStudio) and load the stacked cohort
+matrix from 03a. Its columns are **donor × cell type**: one column per (donor,
+`Subclass`) pair, carrying the donor-level metadata (`Donor ID`, `Sex`, ADNC
+pathology grade) that the aggregation preserved.
+
+```{r}
+library(SingleCellExperiment)
+
+pb <- readRDS("../../outputs/pseudobulk_cohort.rds")
+pb
+```
+
+```{r}
+# One row per donor: the pathology grade and sex we will model on. Keep
+# check.names = FALSE so the spaced column names ("Donor ID") survive intact.
+meta_cols  <- c("Donor ID", "Overall AD neuropathological Change", "Sex")
+donor_meta <- unique(as.data.frame(colData(pb)[, meta_cols], check.names = FALSE))
+donor_meta
+table(donor_meta$`Overall AD neuropathological Change`)
+```
+
+::: {.callout-note title="Didn't build the cohort in 03a? Load the ready-made copy"}
+Building the cohort matrix in [03a](../03a-pseudobulk/index.qmd#sec-scaleup)
+requires downloading ~11 GB of donor files, which is a lot for one class session.
+So a small (~28 MB) ready-made copy of exactly that object — the 20-donor PFC
+cohort described below — ships with the repository. If
+`outputs/pseudobulk_cohort.rds` does not exist, load that instead and read on:
+
+```{r}
+pb <- readRDS("../../data/example/pseudobulk_cohort.rds")
+```
+
+The headline path is still "use what you built in 03a"; this is only so nobody is
+stranded.
+:::
+
+The cohort here is **20 SEA-AD prefrontal-cortex donors**, chosen (as 03a's
+exercise asks) to span pathology while staying balanced on the obvious confounds:
+10 **low** (`Not AD` / `Low` ADNC) and 10 **high** (`Intermediate` / `High`),
+5 female + 5 male in each group, all with good RNA quality (RIN ≥ 8.3). Balance
+is what lets us attribute a difference to pathology rather than to sex or bad RNA.
+
+## Step 3 — Pick a cell type and subset
+
+DE is run **one cell type at a time**: astrocytes are compared to astrocytes,
+microglia to microglia. Different cell types have different baseline programs, and
+pathology may touch each differently; pooling them would just blur those signals
+together. We demonstrate with **astrocytes** — abundant in every donor (so the
+profiles are deep), and biologically central to the disease (reactive astrocytes
+are a hallmark of Alzheimer's). You will change this in the frontier exercises.
+
+```{r}
+cell_type <- "Astrocyte"
+
+# Keep only this cell type's columns, and drop any donor whose profile was summed
+# from too few cells to trust (the ncells >= 10 rule flagged in 03a).
+pb_ct <- pb[, pb$Subclass == cell_type & pb$ncells >= 10]
+pb_ct
+sort(pb_ct$ncells)
+```
+
+Every donor should survive the `ncells` filter for a common type like astrocytes;
+for a rare type it might drop a few, shrinking an already small cohort — itself a
+useful thing to notice.
+
+## Step 4 — Define the contrast and the design
+
+This is the first genuinely *scientific* step, and the one the tool cannot make
+for you. Two decisions:
+
+1. **The contrast.** SEA-AD grades each donor's **Overall AD neuropathological
+   Change (ADNC)** as `Not AD`, `Low`, `Intermediate`, or `High`. We collapse
+   these into a binary **low vs high** split. That is a choice — it treats a graded
+   process as two boxes and throws away the ordering — and the frontier revisits it.
+2. **The covariates.** Sex differs cell by cell in expression and could correlate
+   with group if the cohort were unbalanced; we adjust for it by putting it in the
+   model. The cohort is *designed* to be sex-balanced, so this is insurance, not
+   rescue.
+
+```{r}
+# Binary pathology from ADNC.
+adnc <- pb_ct$`Overall AD neuropathological Change`
+pathology <- factor(ifelse(adnc %in% c("Not AD", "Low"), "low", "high"),
+                    levels = c("low", "high"))
+sex <- factor(pb_ct$Sex)
+
+# Check the design is balanced before trusting any test built on it.
+table(pathology)
+table(sex, pathology)
+```
+
+The design matrix encodes "model each gene as sex + pathology." With `low` as the
+reference level, the `pathologyhigh` coefficient is exactly what we test: the
+average log-fold change from low to high pathology, holding sex fixed.
+
+```{r}
+design <- model.matrix(~ sex + pathology)
+design
+```
+
+::: {.callout-important title="A covariate you cannot add here: age"}
+High-pathology donors are, on average, older than low-pathology ones — pathology
+and age are entangled in the population, and this cohort carries a residual age
+gap (~9 years). You could add `Age at Death` to the model (`~ sex + age +
+pathology`) to adjust for it. We leave it out of the core demo to keep the model
+simple, but adding it is one of the frontier exercises — and a genuinely
+defensible modeling choice, not a nuisance.
+:::
+
+## Step 5 — Build the `DGEList` and filter low-count genes
+
+`edgeR` works on a `DGEList`: the count matrix plus per-sample library sizes.
+Most genes are barely detected in any donor and carry no usable signal; testing
+them only worsens the multiple-testing burden. `filterByExpr` drops them using
+the design, keeping genes expressed at a workable level in a large enough subgroup.
+
+```{r}
+library(edgeR)
+
+y <- DGEList(counts = assay(pb_ct, "counts"))
+
+keep <- filterByExpr(y, design)
+y <- y[keep, , keep.lib.sizes = FALSE]
+summary(keep)   # how many genes survive
+```
+
+You go from the full feature set (~36,600 genes) down to the expressed ones —
+about 20,000 for astrocytes here, fewer for rarer or shallower cell types.
+Filtering on the design (not a flat count cutoff) is what keeps a gene expressed
+in only one group from being discarded.
+
+## Step 6 — Normalize for composition (TMM)
+
+Pseudobulk columns differ enormously in total counts — a donor with more
+astrocytes sums to a bigger library. Worse, if a handful of genes dominate one
+group, they can make *every other* gene look relatively lower there, a composition
+artifact. `normLibSizes` computes **TMM** normalization factors that correct
+for both, so comparisons are between genes' *relative* abundances, not library
+sizes.
+
+```{r}
+y <- normLibSizes(y)
+y$samples
+```
+
+The `norm.factors` column should sit near 1 (for this cohort they range about
+0.8–1.2). A factor far from 1 flags a donor with an unusual composition — worth a
+look, not automatically a problem.
+
+::: {.callout-note title="`normLibSizes` vs. `calcNormFactors`"}
+Recent `edgeR` renamed `calcNormFactors` to `normLibSizes`; the two are the same
+TMM computation. Older tutorials and the `edgeR` user's guide still show
+`calcNormFactors`, which continues to work but now prints a rename message. Use
+`normLibSizes` to match current `edgeR`.
+:::
+
+## Step 7 — Estimate dispersion and fit the quasi-likelihood model
+
+Count data is noisier than a Poisson model expects (biological variability between
+donors adds *overdispersion*), and with only ~20 donors we cannot estimate each
+gene's variability from that gene alone. `edgeR` solves this by **sharing
+information across genes**: `estimateDisp` shrinks each gene's dispersion toward a
+trend, and the **quasi-likelihood** F-test (`glmQLFit` + `glmQLFTest`) adds a
+second layer of shrinkage on top, which is what makes it well-calibrated for small
+sample sizes. This QL pipeline is the current `edgeR` recommendation for
+pseudobulk.
+
+```{r}
+y <- estimateDisp(y, design)
+plotBCV(y)   # biological coefficient of variation vs abundance
+
+fit <- glmQLFit(y, design)
+
+# Test the pathology coefficient, holding sex fixed.
+res <- glmQLFTest(fit, coef = "pathologyhigh")
+```
+
+## Step 8 — Read the results
+
+`topTags` ranks genes by evidence; `decideTests` counts how many pass a
+significance threshold after FDR correction.
+
+```{r}
+tt <- topTags(res, n = Inf)
+head(tt$table, 15)
+
+# Genes significant at FDR < 0.05, split by direction (up / not / down):
+summary(decideTests(res))
+
+# The single strongest gene's adjusted p-value.
+min(tt$table$FDR)
+```
+
+Each row is a gene: `logFC` (the low→high change, in log2 units), `PValue`, and
+`FDR` (the Benjamini–Hochberg adjusted p-value — the number to judge significance
+by, because we tested thousands of genes at once). A gene is a "hit" if its
+`FDR` is below your threshold, conventionally 0.05.
+
+## Step 9 — Visualize: MA and volcano plots
+
+Two standard plots summarize a whole DE test at a glance. The **MA plot** shows
+log-fold change against average expression, with significant genes highlighted —
+`edgeR` draws it directly.
+
+```{r}
+plotMD(res)                      # MA plot; highlights DE genes if any pass FDR<0.05
+abline(h = 0, col = "grey", lty = 2)
+```
+
+The **volcano plot** puts effect size (x) against evidence (y); real hits sit up
+and to the sides.
+
+```{r}
+tab <- tt$table
+plot(tab$logFC, -log10(tab$PValue),
+     pch = 16, cex = 0.4, col = "grey50",
+     xlab = "log2 fold change (high vs low)", ylab = "-log10 p-value",
+     main = paste(cell_type, "— high vs low ADNC"))
+abline(v = 0, col = "grey", lty = 2)
+```
+
+## Step 10 — When the answer is "nothing significant"
+
+Run the astrocyte analysis above and you will find **no genes at FDR < 0.05** —
+in fact the smallest adjusted p-value is essentially 1, and the top-ranked genes
+are unannotated loci (`AP003778.1`, `LURAP1`, `TBX5`) with no coherent biology,
+exactly what a null looks like. The volcano is a symmetric cloud with nothing
+pushed to the top corners. Every diagnostic looked fine: the design was balanced
+(5 F + 5 M in each of 10 low / 10 high donors), normalization factors sat near 1,
+dispersions behaved. The pipeline worked; there is simply no signal it can call
+significant at this scale.
+
+**This is the real result, and it is not a failure.** Three things to sit with:
+
+- **A null is a finding.** "No detectable genome-wide difference in astrocyte
+  expression between low- and high-pathology donors *in this cohort*" is a true,
+  reportable statement. The scientific error would be to keep tweaking until
+  something crosses 0.05 and then report only that.
+- **This design is underpowered, by construction.** The donor is the replicate,
+  so ~10 per group is a *small* experiment. A binary split discards the graded
+  pathology information. And prefrontal cortex is affected relatively late in
+  Alzheimer's, so the between-group difference you are hunting is small to begin
+  with. Small effect + few replicates + coarse contrast = little power.
+- **We know signal exists at larger scale.** SEA-AD's own published DE hits lean
+  on the *middle temporal gyrus* (hit earlier and harder than PFC), the *full
+  84-donor cohort*, and a *continuous* pseudo-progression score rather than a
+  binary grade. Change those levers and genes appear. The null here is a statement
+  about *this cohort and this contrast*, not about the biology.
+
+::: {.callout-note title="Try before you believe the null is inevitable"}
+Swap `cell_type` to `"Immune"` (SEA-AD's label for microglia) or `"Pvalb"`
+interneurons and rerun Steps 3–8. The result stays null — min FDR ≈ 1, zero hits
+— for these too. Seeing the null hold across cell types is what turns "maybe I
+picked a bad cell type" into "this cohort and contrast are underpowered." (A
+*continuous* severity model, in the frontier below, is where an interneuron
+subtype came closest to significance in our own testing — a hint about which
+lever matters most.)
+:::
+
+## Step 11 — Save the results
+
+Save the ranked table so you can reload it, compare cell types, or plot without
+refitting. `outputs/` is git-ignored.
+
+```{r}
+saveRDS(tt$table, sprintf("../../outputs/de_%s.rds", cell_type))
+write.csv(tt$table, sprintf("../../outputs/de_%s.csv", cell_type))
+```
+
+## Step 12 — Your frontier {#sec-frontier}
+
+The pipeline above is the scaffolding. The open questions below are the analysis,
+and — as in the trajectory track — several have no tidy answer. This is where you
+own the science.
+
+::: {.callout-tip title="Required — go looking for the power you're missing"}
+The core demo is underpowered. Change the levers, one at a time, and watch what
+moves:
+
+1. **Add donors.** The donor is the replicate, so more donors is the most direct
+   route to power. Extend 03a's scale-up loop to a larger cohort (keep it balanced)
+   and rerun. How many donors does it take before *anything* crosses FDR < 0.05?
+2. **Use the gradient, not a box.** Instead of binary low/high, model pathology as
+   a continuous or ordinal score. SEA-AD provides **Braak stage** and a
+   **continuous pseudo-progression score**; treating severity as a number rather
+   than two bins recovers information a median split throws away.
+3. **Adjust for age.** Add `Age at Death` to the design (`~ sex + age +
+   pathology`) to separate pathology from the age it is confounded with. Does the
+   ranking change? Does anything get closer to significant?
+:::
+
+::: {.callout-tip title="Optional / advanced — region, and interpreting near-misses"}
+- **Brain region.** SEA-AD's strongest signals are in the **middle temporal gyrus
+  (MTG)**, hit earlier in the disease than PFC. The `MTG/RNAseq/` files load
+  exactly like the PFC ones (tutorial 01). Does the same contrast, same cell type,
+  in MTG yield hits where PFC gave none?
+- **Read the near-misses honestly.** Even with nothing at FDR < 0.05, the
+  top-ranked genes are a hypothesis-generating list — *if* you treat them as such.
+  Are the top astrocyte genes plausibly reactive-astrocyte genes (`GFAP`, `VIM`,
+  complement genes)? A biologically coherent top-of-list is suggestive; a random
+  one says the ranking is noise. Which is it here?
+- **The multiple-cell-type burden.** Testing every cell type multiplies your
+  comparisons. How would you correct for having run the same test in a dozen
+  subclasses?
+
+There is no answer key. A defensible null, clearly reported, is a complete
+result.
+:::
+
+## What you produced
+
+- A full pseudobulk DE analysis for one cell type: contrast, design with a
+  covariate, `filterByExpr` / TMM / quasi-likelihood test, ranked table and
+  diagnostic plots, saved to `outputs/`.
+- A worked example of an **honest null** at class scale, and a clear map of the
+  levers (donors, region, continuous severity, age) that change it.
+
+## Where this connects
+
+- This closes the **pseudobulk track**: [03a](../03a-pseudobulk/index.qmd) built
+  the donor-level unit and stacked the cohort; 04 tested it. The through-line was
+  *the donor is the unit of replication* — from why you sum cells to why ~10
+  donors per group is a small experiment.
+- The other track, [trajectory](../03b-trajectory/index.qmd), asked a different
+  question of the same data — ordering *cells* along a continuum rather than
+  comparing *groups* of donors — and, like this one, ended at a real open frontier
+  (does maturation shift with pathology?) rather than a packaged answer.
+
+## If something breaks
+
+::: {.callout-warning title="`readRDS` can't find `pseudobulk_cohort.rds`"}
+This tutorial consumes the cohort matrix from
+[03a's scale-up exercise](../03a-pseudobulk/index.qmd#sec-scaleup). Either run that
+exercise (it writes `outputs/pseudobulk_cohort.rds`), or load the ready-made copy
+shipped at `../../data/example/pseudobulk_cohort.rds` (Step 2 callout).
+:::
+
+::: {.callout-warning title="A cell type has very few donors after the `ncells` filter"}
+Rare cell types are summed from few nuclei in some donors, and the `ncells >= 10`
+filter in Step 3 can drop those donors, shrinking the cohort until the test is
+meaningless. Check `table(pathology)` after subsetting: if a group is down to a
+handful of donors, that cell type is too rare for DE in this cohort — a finding
+about the data, not an error to code around.
+:::
+
+::: {.callout-warning title="`filterByExpr` or the fit warns about the design"}
+If `model.matrix` produced a column that is all zeros or perfectly collinear (for
+example, a cohort that turned out not to be sex-balanced after the `ncells`
+filter), the fit is not identifiable. Reprint `table(sex, pathology)` and confirm
+every combination is present; drop a covariate you cannot support before refitting.
+:::
