@@ -17,6 +17,8 @@ website:
         text: "03a: Pseudobulk generation"
       - href: tutorials/03b-trajectory/index.qmd
         text: "03b: Trajectory"
+      - href: tutorials/04-pseudobulk-de/index.qmd
+        text: "04: Pseudobulk DE"
 
 format:
   html:
